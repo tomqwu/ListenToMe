@@ -20,23 +20,33 @@ extension MeetingView {
                               elapsed: elapsedLabel)
                 AudioLevelMeters(session: session)
 
-                railSection("Engine") {
-                    Text(CommandCenterLabels.engine(active: runningEngine,
-                                                    saved: ProviderSettings.transcriptionEngine))
-                        .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
-                        .help(runningEngine == nil
-                              ? "The engine the next Start listening will use"
-                              : "The engine this transcription is using — an engine change applies at the next Start")
-                    TranscriptionLanguagePicker(selection: languageBinding(session: session))
-                    TranscriptionComputeInfo(engine: runningEngine ?? ProviderSettings.transcriptionEngine,
-                                             isRunning: runningEngine != nil,
-                                             isPreparing: session.isPreparing)
-                }
+                MacWorkspaceSection(title: "Recording settings") {
+                    railSection("Engine") {
+                        Text(CommandCenterLabels.engine(active: runningEngine,
+                                                        saved: ProviderSettings.transcriptionEngine))
+                            .font(.system(size: 12.5)).foregroundStyle(Theme.ink)
+                            .help(runningEngine == nil
+                                  ? "The engine the next Start listening will use"
+                                  : "The engine this transcription is using — an engine change applies at the next Start")
+                        TranscriptionLanguagePicker(selection: languageBinding(session: session))
+                        TranscriptionComputeInfo(engine: runningEngine ?? ProviderSettings.transcriptionEngine,
+                                                 isRunning: runningEngine != nil,
+                                                 isPreparing: session.isPreparing)
+                    }
 
-                railSection("Languages") {
-                    ConversationLanguageControls(options: $session.languageOptions,
-                        translation: session.liveTranslation, conversationID: currentSessionID,
-                        save: { _ = checkpoint() })
+                    railSection("Languages") {
+                        ConversationLanguageControls(options: $session.languageOptions,
+                            translation: session.liveTranslation, conversationID: currentSessionID,
+                            save: { _ = checkpoint() })
+                    }
+
+                    railSection("Preset") {
+                        Picker("Preset", selection: presetBinding(session: session)) {
+                            ForEach(PresetCatalog.all) { Text($0.name).tag($0.id) }
+                        }
+                        .labelsHidden().controlSize(.small)
+                        .help("Use-case preset — fills Context notes and tailors the AI panes")
+                    }
                 }
 
                 railSection("Automatic AI") {
@@ -49,21 +59,13 @@ extension MeetingView {
                         .font(.caption2).foregroundStyle(.secondary)
                 }
 
-                railSection("Preset") {
-                    Picker("Preset", selection: presetBinding(session: session)) {
-                        ForEach(PresetCatalog.all) { Text($0.name).tag($0.id) }
-                    }
-                    .labelsHidden().controlSize(.small)
-                    .help("Use-case preset — fills Context notes and tailors the AI panes")
-                }
-
-                railSection("Models") {
+                MacWorkspaceSection(title: "AI models") {
                     ForEach(CopilotRole.allCases, id: \.self) { role in
                         modelPicker(role: role, session: session, label: railRoleName(role))
                     }
                 }
 
-                railSection("Session") {
+                MacWorkspaceSection(title: "Session details") {
                     StatRow(key: "turns", value: "\(store.utterances.count)")
                     StatRow(key: "you / others", value: "\(youCount) / \(othersCount)")
                     StatRow(key: "~tok", value: "\(approxTokens)")
@@ -340,17 +342,23 @@ extension MeetingView {
             },
             actions: {
                 SuggestedPromptChips(session: session)
-                FlowLayout(spacing: 7) {
-                    Button("What should I answer?") {
-                        session.requestQuick(.answerQuestion)
+                VStack(alignment: .leading, spacing: 8) {
+                    FlowLayout(spacing: 7) {
+                        Button("What should I answer?") {
+                            session.requestQuick(.answerQuestion)
+                        }
+                        Button("Recap so far") { session.requestQuick(.recap) }
                     }
-                    Button("Recap so far") { session.requestQuick(.recap) }
-                    Button("Follow-up") { session.requestQuick(.followUp) }
-                    Button("Action items") { session.requestQuick(.actionItems) }
-                    Button("Clarify simply") { session.requestQuick(.clarify) }
-                    Button("Counterpoint") { session.requestQuick(.counterpoint) }
-                    Button("Key terms") { session.requestQuick(.keyTerms) }
-                    Button("Draft reply") { session.requestQuick(.draftReply) }
+                    MacWorkspaceSection(title: "More Quick actions") {
+                        FlowLayout(spacing: 7) {
+                            Button("Follow-up") { session.requestQuick(.followUp) }
+                            Button("Action items") { session.requestQuick(.actionItems) }
+                            Button("Clarify simply") { session.requestQuick(.clarify) }
+                            Button("Counterpoint") { session.requestQuick(.counterpoint) }
+                            Button("Key terms") { session.requestQuick(.keyTerms) }
+                            Button("Draft reply") { session.requestQuick(.draftReply) }
+                        }
+                    }
                 }
                 .controlSize(.small)
             })

@@ -66,25 +66,32 @@ struct MobileMeetingView: View {
                                 Button("Notes", systemImage: "note.text") { showNotes = true }
                                 Button("Save", systemImage: "square.and.arrow.down") { saveManually() }.disabled(!session.hasContent)
                             }
-                            ShareLink(item: session.readableShareText) { Label("Share", systemImage: "square.and.arrow.up") }
-                                .disabled(!session.hasContent)
-                            ShareLink(item: session.markdown) { Label("Share Markdown", systemImage: "doc.text") }
-                                .disabled(!session.hasContent)
-                            Menu("Export as", systemImage: "doc.badge.arrow.up") {
-                                ConversationExportLinks(record: session.currentRecord)
+                            Section("Conversation") {
+                                Button("Notes, prompts & files", systemImage: "note.text") { showNotes = true }
+                                Button("Re-transcribe saved audio…", systemImage: "waveform.badge.magnifyingglass") {
+                                    showRetranscription = true
+                                }.disabled(!session.canRetranscribe).accessibilityIdentifier("retranscribeSavedAudio")
+                                Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
+                                Button("Live translation", systemImage: "translate") { showLanguages = true }
+                                Button("Full summary", systemImage: MobileStyle.symbol(for: .summary)) { showFullSummary = true }
                             }
-                            .disabled(!session.hasContent).accessibilityIdentifier("exportAs")
-                            if session.canPlaySavedAudio {
-                                ShareLink(items: session.savedAudioFiles) { Label("Share audio", systemImage: "waveform") }
+                            Section("Share and export") {
+                                ShareLink(item: session.readableShareText) { Label("Share", systemImage: "square.and.arrow.up") }
+                                    .disabled(!session.hasContent)
+                                ShareLink(item: session.markdown) { Label("Share Markdown", systemImage: "doc.text") }
+                                    .disabled(!session.hasContent)
+                                Menu("Export as", systemImage: "doc.badge.arrow.up") {
+                                    ConversationExportLinks(record: session.currentRecord)
+                                }
+                                .disabled(!session.hasContent).accessibilityIdentifier("exportAs")
+                                if session.canPlaySavedAudio {
+                                    ShareLink(items: session.savedAudioFiles) { Label("Share audio", systemImage: "waveform") }
+                                }
                             }
-                            Button("Re-transcribe saved audio…", systemImage: "waveform.badge.magnifyingglass") {
-                                showRetranscription = true
-                            }.disabled(!session.canRetranscribe).accessibilityIdentifier("retranscribeSavedAudio")
-                            Button("Import from Calendar", systemImage: "calendar") { showCalendar = true }
-                            Button("Live translation", systemImage: "translate") { showLanguages = true }
-                            Button("Full summary", systemImage: MobileStyle.symbol(for: .summary)) { showFullSummary = true }
-                            Button("Settings", systemImage: "gearshape") { showSettings = true }
-                            Button("What’s New", systemImage: "sparkles") { showReleaseNotes = true }
+                            Section("App") {
+                                Button("Settings", systemImage: "gearshape") { showSettings = true }
+                                Button("What’s New", systemImage: "sparkles") { showReleaseNotes = true }
+                            }
                         }
                     }
                 }
@@ -280,9 +287,12 @@ struct MobileMeetingView: View {
                 Button {
                     session.requestSummary(for: summaryMode)
                 } label: {
-                    Label(session.isSummarizing ? "Summarizing…" : "Generate \(summaryMode.title)", systemImage: "sparkles")
+                    Label(session.isSummarizing ? "Summarizing…" :
+                          "\(session.output(for: summaryMode).isEmpty ? "Generate" : "Update") \(summaryMode.title)",
+                          systemImage: "sparkles")
                 }
                 .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("full-generate-\(summaryMode.rawValue)")
                 .disabled(session.summaryBlockReason(for: summaryMode) != nil)
                 if session.isSummarizing {
                     Button("Cancel summary") { session.cancelSummary() }

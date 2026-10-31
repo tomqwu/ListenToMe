@@ -2,6 +2,29 @@ import XCTest
 
 @MainActor
 final class WatchCapabilityUITests: XCTestCase {
+    func testRecordingActionsNameTheirDeviceAndKeepOfflineRemoteSeparate() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--watch-design-fixture", "-watchRecordingConsentShownV2", "YES"]
+        app.launch()
+        let local = app.buttons["Record on Watch"]
+        XCTAssertTrue(local.waitForExistence(timeout: 5))
+        guard local.exists else { return }
+        XCTAssertTrue(local.isEnabled)
+        capture("Explicit Watch recording action")
+        app.swipeUp()
+        let remote = app.buttons["Start on iPhone"]
+        XCTAssertTrue(remote.waitForExistence(timeout: 5))
+        XCTAssertFalse(remote.isEnabled)
+        capture("Explicit offline iPhone action")
+        app.swipeDown(); local.tap()
+        let stop = app.buttons["Stop on Watch"]
+        XCTAssertTrue(stop.waitForExistence(timeout: 10))
+        XCTAssertTrue(stop.isHittable)
+        capture("Explicit Watch Stop")
+        stop.tap()
+        XCTAssertTrue(local.waitForExistence(timeout: 5))
+    }
+
     func testSimulatorPreviewShowsRecordingAndStopWithoutMicrophone() {
         let app = XCUIApplication()
         app.launchArguments = ["--watch-design-fixture", "-watchRecordingConsentShownV2", "NO"]
@@ -9,7 +32,7 @@ final class WatchCapabilityUITests: XCTestCase {
         // Fail before touching Record if this explicit, microphone-free fixture is unavailable.
         let fixture = app.descendants(matching: .any)["watchPreviewFixture"].firstMatch
         guard fixture.waitForExistence(timeout: 5) else { return XCTFail("Explicit simulator preview is unavailable") }
-        let record = app.buttons["Record"]
+        let record = app.buttons["Record on Watch"]
         XCTAssertTrue(record.isEnabled)
         capture("Watch ready home")
         record.tap()
@@ -18,11 +41,11 @@ final class WatchCapabilityUITests: XCTestCase {
         XCTAssertTrue(title.waitForExistence(timeout: 5))
         capture("Watch recording consent")
         let consent = app.tables.firstMatch
-        let confirm = consent.buttons["Record"]
+        let confirm = consent.buttons["Record on Watch"]
         for _ in 0..<6 where !confirm.isHittable { consent.swipeUp() }
         XCTAssertTrue(confirm.isHittable, "Consent must remain readable with its action reachable")
         confirm.tap()
-        let stop = app.buttons["Stop"]
+        let stop = app.buttons["Stop on Watch"]
         XCTAssertTrue(stop.waitForExistence(timeout: 10))
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Recording")).firstMatch.exists)
         capture("Watch recording and Stop")
@@ -47,8 +70,8 @@ final class WatchCapabilityUITests: XCTestCase {
         XCTAssertTrue(stop.waitForExistence(timeout: 5))
         capture("Watch recording restored after background")
         stop.tap()
-        XCTAssertTrue(app.buttons["Record"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["Stop"].exists)
+        XCTAssertTrue(app.buttons["Record on Watch"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Stop on Watch"].exists)
     }
 
     func testPendingStartDoesNotStartLaterAfterBackground() async throws {
@@ -72,7 +95,7 @@ final class WatchCapabilityUITests: XCTestCase {
         guard app.descendants(matching: .any)["watchPreviewFixture"].firstMatch.waitForExistence(timeout: 5) else {
             return XCTFail("Microphone-free preview was not enabled")
         }
-        let action = app.buttons[interrupted ? "Continue" : "Record"]
+        let action = app.buttons[interrupted ? "Continue" : "Record on Watch"]
         XCTAssertTrue(action.waitForExistence(timeout: 10))
         action.tap()
         XCTAssertFalse(action.isEnabled, "The permission preparation must be pending before departure")
@@ -86,10 +109,10 @@ final class WatchCapabilityUITests: XCTestCase {
         }
         try await Task.sleep(for: .seconds(16))
         if !dismiss { app.activate() }
-        let record = app.buttons["Record"]
+        let record = app.buttons["Record on Watch"]
         XCTAssertTrue(record.waitForExistence(timeout: 5))
         XCTAssertTrue(record.isEnabled, "Return must allow a new explicit recording attempt")
-        XCTAssertFalse(app.buttons["Stop"].exists, "The old permission callback must not capture after departure")
+        XCTAssertFalse(app.buttons["Stop on Watch"].exists, "The old permission callback must not capture after departure")
         capture(interrupted ? "Watch cancelled Continue" : "Watch cancelled Start")
     }
 
@@ -104,7 +127,7 @@ final class WatchCapabilityUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--compatibility-denied-fixture"]
         app.launch()
-        let local = app.buttons["Record"]
+        let local = app.buttons["Record on Watch"]
         XCTAssertTrue(local.waitForExistence(timeout: 10))
         XCTAssertFalse(local.isEnabled, "Denied local microphone must block Record before a tap")
         let recovery = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Microphone access is off")).firstMatch
@@ -116,7 +139,7 @@ final class WatchCapabilityUITests: XCTestCase {
         localShot.lifetime = .keepAlways
         add(localShot)
         app.swipeUp()
-        let remote = app.buttons["Start"]
+        let remote = app.buttons["Start on iPhone"]
         XCTAssertTrue(remote.waitForExistence(timeout: 5))
         XCTAssertFalse(remote.isEnabled, "An offline phone must not offer remote capture")
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())

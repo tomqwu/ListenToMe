@@ -38,6 +38,12 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased)
 
+- Explain unavailable automatic summaries before listening, retain explicit provider choices and
+  allow a saved Auto preference to be turned off. Give populated portrait transcripts more reading
+  space, move optional speech tools into Transcript actions, label Generate/Update, and group
+  conversation tools, sharing and app actions. Keep automatic-summary errors above optional
+  diagnostics inside the Quick panel. Watch recording controls name Watch or iPhone.
+
 - Add explicit **Refresh search** in History to rebuild derived search data using currently available
   Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure
   and keep Ask blocked until a current archive pass finishes. No language assets are downloaded. (#223)
@@ -202,6 +208,9 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 - Settings → Privacy now explains that optional Ollama, Cloud AI and OpenAI-compatible requests send text and included context to the provider you choose; Apple Intelligence stays on-device. (#247)
 
 ## macOS (unreleased since 1.4.4)
+
+- Keep optional recording settings, AI models and session details in native disclosures. Leave
+  answer and recap directly visible while placing six secondary Quick actions under More Quick actions.
 
 - Add explicit **Refresh search** in History to rebuild derived search data using currently available
   Apple models. Preserve saved conversations and exact-word search; show retry guidance on failure

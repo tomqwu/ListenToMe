@@ -20,6 +20,10 @@ struct MobileSavedAudioFixture: View {
             TranscriptSegment(source: .you, text: "Line \(index + 1) of the recorded conversation.", isFinal: true,
                               start: start, end: start + 2.5)
         }
+        if ProcessInfo.processInfo.arguments.contains("--saved-audio-without-speech") {
+            session.segments = []
+            session.notes = "No recognizable speech; retain the original recording."
+        }
         session.save(announce: false)
         if let writer = audio.beginRun(conversation: session.id, offset: 0) {
             let tone = (0..<160_000).map { Float(sin(Double($0) * 0.06) * 0.2) }   // 10 s at 16 kHz

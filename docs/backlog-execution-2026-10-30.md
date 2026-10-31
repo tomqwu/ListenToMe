@@ -2,7 +2,8 @@
 
 The 22:22 UTC open-issue readback contained **#181, #205, #223, #236, #334 and #336**.
 The subsequently opened [#352](https://github.com/tomqwu/ListenToMe/issues/352) is separately owned
-cross-platform GUI refinement, bringing the current queue to **seven**; do not duplicate that work.
+cross-platform GUI refinement. PR #353 subsequently merged at `5e1a8f4` and closed #352 on
+October 31, 01:34 UTC, leaving the original **six** open; do not duplicate that completed work.
 This is a delivery checkpoint, not a replacement for implementation, acceptance or the sequential PR queue.
 
 PRs #318, #349, #350 and #351 merged. #318 closed #333, #335, #337, #346, #347 and #348; #225

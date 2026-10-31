@@ -26,7 +26,9 @@ final class MobileTranscriptUITests: XCTestCase {
         XCTAssertTrue(scroll.waitForExistence(timeout: 5))
         let transcript = app.otherElements["transcriptPanel"]
         let quick = app.otherElements["summary-panel-quick"]
-        XCTAssertLessThan(transcript.frame.height, quick.frame.height * 0.7)
+        let transcriptShare = transcript.frame.height / (transcript.frame.height + quick.frame.height)
+        XCTAssertGreaterThanOrEqual(transcriptShare, 0.43, "Populated speech keeps the approved reading allocation")
+        XCTAssertLessThanOrEqual(transcriptShare, 0.5, "Quick Summary retains at least half the combined panel height")
 
         expectLatestVisible(in: scroll)
         let partialID = latestText(in: scroll).identifier

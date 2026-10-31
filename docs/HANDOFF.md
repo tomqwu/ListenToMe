@@ -1,12 +1,31 @@
 # Active backlog delivery — October 30, 2026
 
-Seven issues remain open, including the separately owned GUI refinement
-[#352](https://github.com/tomqwu/ListenToMe/issues/352). Three local fixes have real focused red/green evidence: Mac long-name
+Six issues remain open after workspace PR #353 closed #352. Three local fixes have real focused
+red/green evidence: Mac long-name
 layout (#334), saved-audio ordering (#336), and Watch inbox redelivery data preservation (#181).
 Their required delivery gates are incomplete; they are not merged or in TestFlight 43. Spanish
 semantic-search candidates still fail the fixed quality requirement; physical #205/#236 and Watch
 acceptance also remain open. Continue the exact work below rather than treating an unchanged board
 as an idle queue. [Sources, tested outcomes, blockers and next actions](backlog-execution-2026-10-30.md).
+
+## Unreleased workspace usability refinements — October 30, 2026
+
+[PR #353](https://github.com/tomqwu/ListenToMe/pull/353) carries the cross-platform workspace pass:
+more populated portrait transcript space, capability-aware Auto controls, named Generate/Update,
+grouped conversation/transcript tools, native Mac disclosures and device-named Watch recording.
+The existing Mac minimum window width remains 1100 points. No provider choice or capture policy changes.
+
+[Scoped behavior, native evidence and preserved failures](workspace-usability.md) and the
+[source-bound gallery](images/workspace/unreleased-2026-10-30/manifest.json) distinguish test results,
+installed Mac inspection, simulator previews and physical acceptance. PR #353 merged at `5e1a8f4` on October 31, 01:34 UTC after its complete local validation, independent
+review and all three required checks on `1b275b1`. Its final native run uses `c2c450e`; later
+documentation-only commits preserve its frozen app/test/config inputs. The #334 branch now integrates
+that exact main. Only README/HANDOFF conflicted; both galleries and acceptance histories were retained.
+The existing source-bound captures are labelled by their source; combined-source validation and
+review remain pending. The original #334 regression and installed acceptance are not relabelled.
+Earlier failed aggregates remain failed, including the corrected error clipping and legacy test
+expectations. Physical phone/iPad/Watch capture, paired transfer, full VoiceOver and real OTHERS
+acceptance remain pending. This work is unreleased and is not in TestFlight 1.20.3 (43).
 
 ## Unreleased local History Refresh — October 30, 2026
 
@@ -102,7 +121,7 @@ error remain preserved separately; the repaired verifier did not repeat the uplo
 
 PR [#318](https://github.com/tomqwu/ListenToMe/pull/318) closed **#333, #335, #337, #346, #347 and #348**.
 At that release checkpoint, six remained open: **#181, #205, #223, #236, #334 and #336**; the later
-separately owned **#352** brings the current count to seven. Optional MPNet delivery remains excluded,
+separately owned **#352** temporarily brought the count to seven, then closed with PR #353. Optional MPNet delivery remains excluded,
 with its source and negative results preserved. #334's installed rename/VoiceOver checks found the
 long-name layout regression described above; its corrected installed-layout acceptance subsequently passed;
 #336 retains its near-end/overlap/routes matrix. These limits do not reopen completed fixes.
