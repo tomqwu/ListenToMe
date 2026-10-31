@@ -55,6 +55,8 @@ final class MobileNativeInteractionTests: XCTestCase {
         XCTAssertTrue(error.isHittable)
         let panel = app.otherElements["summary-panel-quick"].firstMatch
         XCTAssertLessThanOrEqual(error.frame.maxY, panel.frame.maxY)
+        XCTAssertLessThanOrEqual(error.frame.maxY, app.buttons["quickStatusDetails"].frame.minY,
+                                 "The error stays above optional diagnostics in the smaller Quick reader")
         XCTAssertTrue(error.label.contains("internet connection was lost"))
         capture(app, "Automatic summary failure and retry status")
         expect(app.staticTexts["output-quick"], containing: "Thursday")

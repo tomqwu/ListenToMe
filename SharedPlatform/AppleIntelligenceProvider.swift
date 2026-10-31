@@ -63,7 +63,8 @@ public struct AppleIntelligenceProvider: LLMProvider {
             return "Apple Intelligence could not complete this summary. Try again, or choose Ollama in Settings."
         }
     }
-    public static let automaticQuickUnavailableReason = "Auto Quick Summary requires Ollama. Apple Intelligence is available for manual summaries."
+    public static let automaticQuickUnavailableReason = "Auto summaries require Ollama, a cloud AI service or an "
+        + "OpenAI-compatible server. Apple Intelligence is available for manual summaries."
 
     public func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in

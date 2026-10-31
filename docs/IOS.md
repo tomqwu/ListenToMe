@@ -1841,3 +1841,10 @@ on phone/iPad/Duo. **Summary → Translate summary** translates an existing comp
 independent target; it does not change summary generation language/provider. Originals stay available.
 Installed Apple Translation packs are required; setup is explicit and unsupported pairs are explained.
 TestFlight 1.20.2 (42) disables Translate while busy, provides Cancel and stops indefinite progress after a per-text-chunk deadline. Native cancellation retains one worker slot until it exits; originals remain visible and retry waits for safe recovery. No translation engine is added to Watch. See [usage, privacy and acceptance](translation.md) and [recovery evidence](translation-recovery.md).
+
+## Unreleased workspace usability
+
+See [workspace layout and controls](IOS-DESIGN.md) for transcript-first populated portrait layouts,
+Transcript actions, named Generate/Update controls and grouped More actions. Auto explains its
+provider limitation before capture; unavailable Auto cannot be enabled, an existing enabled
+preference can be turned off, and provider selection never changes automatically.

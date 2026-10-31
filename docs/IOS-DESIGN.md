@@ -12,8 +12,10 @@ The primary task is following a conversation while seeing its evolving summary. 
 
 ## Following the transcript
 
-The transcript gets 34% of the Live reading area, between 160 and 260 points; Quick Summary gets
-the remaining space. An expand action opens a full transcript reader. In landscape and accessibility
+With speech present, the transcript gets 46% of the Live reading area, between 200 and 360 points;
+Quick Summary gets the remaining space. Empty conversations retain the smaller 34% preview.
+Optional speech-correction setup moves into **Transcript actions** once speech is present; enabled
+correction status stays visible. Select lines and Play recording share that menu. An expand action opens a full transcript reader. In landscape and accessibility
 layouts, a four-line preview shows the latest words without nested scrolling; expand for all history.
 
 The reader starts at the latest speech and follows both growing partial phrases and finalized text.
@@ -24,6 +26,15 @@ the end, resumes following. A different conversation starts with fresh follow st
 ## Model roles
 
 Quick Summary can use Flash for short automatic updates. Summary defaults to a full model. Keep valid full-model selections stable across refreshes. (Until 1.15.0 a Deep role also required a non-Flash model; a saved Deep model is now left in place and never read.)
+
+Summary actions show **Generate** before output exists and **Update** afterward, with matching accessible names and 44-point
+minimum targets and the existing cancellation action. Auto availability is explained before listening,
+even when Auto is off. An unavailable provider cannot enable Auto; a saved enabled preference can
+still be turned off, and neither provider nor preference is changed automatically.
+
+More groups **Conversation**, **Share and export**, and **App** actions. **Notes, prompts & files**
+opens the existing Notes sheet, whose **Ask AI** section names its prompt tools. The familiar bottom
+Notes shortcut and full-summary reader remain.
 
 Every summary panel shows its actual provider/model and opens that role's model chooser. Only API-listed models are recommended; names and modification dates come from the live catalog, not invented release labels.
 

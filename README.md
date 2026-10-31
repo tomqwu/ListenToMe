@@ -86,6 +86,51 @@ make ios-test
 
 ## Screenshots
 
+### Unreleased workspace refinement
+
+These native previews show the **unreleased** reading-space and action-label improvements; they
+are separate from TestFlight 1.20.3 (43). Mac optional controls start collapsed, summary actions
+say Generate/Update, and Watch actions name the recording device. Tap any preview for its native
+resolution. [Source, checksums and capture limits](docs/images/workspace/unreleased-2026-10-30/manifest.json) ·
+[Behavior and validation](docs/workspace-usability.md).
+
+**Mac · focused workspace and optional controls**
+
+<p align="center"><a href="docs/images/workspace/unreleased-2026-10-30/mac-workspace.png"><img src="docs/images/workspace/unreleased-2026-10-30/mac-workspace.png" width="760" alt="Unreleased Mac workspace with optional recording settings, AI models, session details and secondary Quick actions collapsed; empty demonstration conversation."></a></p>
+
+[Expanded model choices and all six secondary actions](docs/images/workspace/unreleased-2026-10-30/mac-options.png)
+remain available through native disclosures.
+
+**iPhone · full summary and Duo reading**
+
+<p align="center"><a href="docs/images/workspace/unreleased-2026-10-30/iphone-live.png"><img src="docs/images/workspace/unreleased-2026-10-30/iphone-live.png" width="240" alt="Unreleased iPhone Pro Max populated portrait workspace with more transcript space, Transcript actions and labeled Update; complete synthetic speech and Quick output."></a>
+<a href="docs/images/workspace/unreleased-2026-10-30/iphone-summary.png"><img src="docs/images/workspace/unreleased-2026-10-30/iphone-summary.png" width="240" alt="Unreleased iPhone full-summary reader with an explicitly labeled Update Summary button and complete synthetic decisions and next steps."></a></p>
+
+<p align="center"><a href="docs/images/workspace/unreleased-2026-10-30/iphone-duo.png"><img src="docs/images/workspace/unreleased-2026-10-30/iphone-duo.png" width="760" alt="Unreleased iPhone Duo landscape with two complete synthetic transcript lines, all Quick Summary bullets and labeled Update action inside their reading areas."></a></p>
+
+**iPad · transcript and summaries together**
+
+<p align="center"><a href="docs/images/workspace/unreleased-2026-10-30/ipad-wide.png"><img src="docs/images/workspace/unreleased-2026-10-30/ipad-wide.png" width="760" alt="Unreleased native iPad wide workspace showing synthetic transcript, Quick Summary and full Summary with named Update buttons."></a></p>
+
+[Compact iPad mini layout](docs/images/workspace/unreleased-2026-10-30/ipad-mini.png) keeps transcript
+and Quick Summary side by side in its narrower window.
+
+**Watch · local recording and the separate iPhone remote**
+
+<p align="center">
+<a href="docs/images/workspace/unreleased-2026-10-30/watch-home.png"><img src="docs/images/workspace/unreleased-2026-10-30/watch-home.png" width="180" alt="Unreleased Watch home with Record on Watch and disabled Start on iPhone while the phone is offline."></a>
+<a href="docs/images/workspace/unreleased-2026-10-30/watch-recording.png"><img src="docs/images/workspace/unreleased-2026-10-30/watch-recording.png" width="180" alt="Unreleased Watch microphone-free recording preview with elapsed time and explicit Stop on Watch."></a>
+</p>
+
+Simulator summaries and Watch recording use explicit synthetic fixtures. The Live previews inject
+synthetic summaries and simulated Auto; in normal use, Apple Intelligence supports manual
+Generate/Update, while Auto requires a configured supported service. These images establish
+layout, not real model quality, physical recording or paired transfer. No Apple listing upload or
+release is implied.
+
+<details>
+<summary>Previous TestFlight and History galleries · before workspace refinement</summary>
+
 ### Unreleased local History refresh
 
 These native previews show an **unreleased follow-up**, not the accepted TestFlight 1.20.3 (43)
@@ -300,6 +345,8 @@ content and is historical QA, not a clean current release preview.
 <p align="center">
   <a href="docs/images/ios/1.18.2/iphone-05-menu.png"><img src="docs/images/ios/1.18.2/iphone-05-menu.png" width="200" alt="Historical 1.18.2 iPhone More menu with the Full summary icon."></a>
 </p>
+
+</details>
 
 </details>
 

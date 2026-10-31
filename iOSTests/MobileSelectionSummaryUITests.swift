@@ -23,6 +23,7 @@ final class MobileSelectionSummaryUITests: XCTestCase {
 
     func testSelectLinesSummarizeAndAddToNotes() {
         let app = launch()
+        app.buttons["transcriptOptions"].tap()
         let select = app.buttons["selectTranscriptLines"]
         XCTAssertTrue(select.waitForExistence(timeout: 5))
         select.tap()
@@ -144,6 +145,7 @@ final class MobileSelectionSummaryUITests: XCTestCase {
 
     func testAnUnavailableProviderDisablesSummarizeWithTheReason() {
         let app = launch(["--selection-unavailable"])
+        app.buttons["transcriptOptions"].tap()
         app.buttons["selectTranscriptLines"].tap()
         line("We ship the beta", in: app).tap()
         XCTAssertFalse(app.buttons["summarizeSelection"].isEnabled)
@@ -166,6 +168,7 @@ final class MobileSelectionSummaryUITests: XCTestCase {
     /// answer. The slow fixture holds each answer for two seconds.
     func testCancelAndANewSheetStartClean() {
         let app = launch(["--selection-slow"])
+        app.buttons["transcriptOptions"].tap()
         app.buttons["selectTranscriptLines"].tap()
         line("We ship the beta", in: app).tap()
         app.buttons["summarizeSelection"].tap()

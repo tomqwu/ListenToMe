@@ -29,7 +29,7 @@ struct MobileNotesView: View {
                         session.save(announce: false)
                     }.disabled(session.isSummarizing)
                 }
-                Section {
+                Section("Ask AI") {
                     ConversationPromptEditor(instructions: $session.summaryInstructions,
                         suggestions: session.suggestedPrompts,
                         domain: session.vocabulary.banner(for: session.id)?.domain,

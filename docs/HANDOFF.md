@@ -1,3 +1,19 @@
+# Unreleased workspace usability refinements — October 30, 2026
+
+[PR #353](https://github.com/tomqwu/ListenToMe/pull/353) carries the cross-platform workspace pass:
+more populated portrait transcript space, capability-aware Auto controls, named Generate/Update,
+grouped conversation/transcript tools, native Mac disclosures and device-named Watch recording.
+The existing Mac minimum window width remains 1100 points. No provider choice or capture policy changes.
+
+[Scoped behavior, native evidence and preserved failures](workspace-usability.md) and the
+[source-bound gallery](images/workspace/unreleased-2026-10-30/manifest.json) distinguish test results,
+installed Mac inspection, simulator previews and physical acceptance. The PR records the final
+complete validation, independent review, exact-head checks and merge outcome. Its final native run
+uses `c2c450e`; later documentation-only commits preserve all frozen app/test/config inputs.
+Earlier failed aggregates remain failed, including the corrected error clipping and legacy test
+expectations. Physical phone/iPad/Watch capture, paired transfer, full VoiceOver and real OTHERS
+acceptance remain pending. This work is unreleased and is not in TestFlight 1.20.3 (43).
+
 # Unreleased local History Refresh — October 30, 2026
 
 Explicit **Refresh search** rebuilds derived local Apple search data without changing conversations

@@ -520,9 +520,9 @@ extension MobileSession {
     }
 
     func automaticReviewStatus(_ mode: MobileSummaryMode) -> String {
+        if let reason = automaticQuickAvailability { return "Auto unavailable · " + reason }
         guard autoQuick else { return "Auto off · Generate manually." }
         guard state == .recording else { return "Auto reviews run while listening. Generate is also available." }
-        if let reason = automaticQuickAvailability { return "Auto paused · " + reason }
         guard let reviewMode = AutomaticReviewMode(rawValue: mode.rawValue) else { return autoQuickStatus }
         return automaticReviews.status(reviewMode)
     }
@@ -530,7 +530,8 @@ extension MobileSession {
     func cancelSummary() { summaryTask?.cancel(); cancelSelectionSummary() }
 
     var autoQuickStatus: String {
-        guard autoQuick else { return "Auto off · Turn on Auto for live updates, or tap Refresh." }
+        if let reason = automaticQuickAvailability { return "Auto unavailable · " + reason }
+        guard autoQuick else { return "Auto off · Turn on Auto for live updates, or update manually." }
         if generatingMode == .quick { return "Updating Quick Summary…" }
         if state != .recording {
             if quickReader.completedReads > 0, quickSummary.isEmpty, !quickReader.context.hasChanges(quickPieces) {
@@ -541,7 +542,6 @@ extension MobileSession {
         if quickReader.isReading {
             return quickReader.isCatchingUp ? "Catching up · Recap covers speech processed so far." : "Listening · Checking new speech…"
         }
-        if let reason = automaticQuickAvailability { return "Auto paused · " + reason }
         if quickSummaryError != nil { return "Auto on · Check failed; retrying automatically." }
         if quickReader.isCatchingUp { return "Catching up · Recap covers speech processed so far." }
         if !quickReader.context.hasChanges(quickPieces) {
