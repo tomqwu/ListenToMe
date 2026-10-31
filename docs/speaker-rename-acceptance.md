@@ -66,7 +66,8 @@ and gallery; this candidate's runtime, tests and build configuration remain iden
 ## Corrected installed acceptance — October 30, 23:04 UTC
 
 The maintainer completed Xcode setup. At 22:43 UTC, first-launch status and simulator inventory both
-returned zero on Xcode 27.2 (27B52). The earlier aggregate remains failed; a new full run is required.
+returned zero on Xcode 27.2 (27B52). At that checkpoint a new full run was required; the earlier
+aggregate remains failed regardless of later results.
 
 The installed normal Debug app from `9a39a12` passed double-click and context-menu rename,
 Save/Cancel, empty-name refusal, full quit/relaunch persistence and neighboring-conversation isolation.
@@ -88,7 +89,8 @@ post-quit serialization changed no decoded content. No Dev process remained, the
 already trashed, and the later session had already completed the scoped Dev reset. No reset was
 repeated. The original deferred event and completed follow-up are both retained in the receipt.
 
-Fresh, unchanged native-resolution window captures refresh the README. Independent review inspected
+That source's fresh, unchanged native-resolution window captures remain in the README's labelled
+historical gallery. Independent review inspected
 the rendered images, actual VoiceOver/input evidence, archive differences and source/signing receipt.
 [Capture provenance and originals](images/mac/speaker-rename-unreleased-2026-10-30/manifest.json) ·
 [Sanitized installed acceptance receipt](evaluations/mac-speaker-name-overflow-installed-2026-10-30.json).
@@ -96,13 +98,48 @@ Some initial automation captures omitted the child sheet or captured an offset/b
 remain diagnostics and were excluded. Full-screen dialog evidence and native window captures repaired
 the evidence gap without changing the app. No acoustic, Store-sandbox or physical iOS pass is claimed.
 
-## Remaining work
+## Historical CI and setup checkpoint
 
 All three required checks passed on exact `f108857` in
-[run 41143536177](https://github.com/tomqwu/ListenToMe/actions/runs/41143536177); runtime/tests/config
-remain unchanged from `9a39a12`. PR [#354](https://github.com/tomqwu/ListenToMe/pull/354) is open.
+[run 41143536177](https://github.com/tomqwu/ListenToMe/actions/runs/41143536177). That checkpoint's
+runtime/tests/config were unchanged from `9a39a12`; it predates the combined workspace candidate.
 The October 31, 00:42–00:43 UTC fresh setup attempt was refused by the resource guard after simulator
 preparation, before make/tests. All 1,085 inputs matched and both owned devices shut down. The
-reviewed retry waits for the foreign native run to finish. Fresh full validation, final review and
-merge remain pending. Neither CI nor installed acceptance turns the original failed aggregate into
-a full pass or establishes a release. Cleanup is complete; no repeated setup/unlock/reset is needed.
+reviewed retry waited for the foreign native run to finish. This was a setup refusal, not a product
+test result or a full pass. Cleanup is complete; no repeated setup/unlock/reset is needed.
+
+## Combined candidate `89e9226`
+
+This candidate integrates main `5e1a8f4`, including independently accepted workspace PR #353.
+Its #334 runtime delta against that main is the two-line native compression/tail-truncation fix.
+`MacSpeakerNameButton.swift`, `EditableTranscriptRow.swift` and the bound bitmap-test file are
+byte-identical to `9a39a12`. The whole app is not: the integrated workspace changed, so the earlier
+installed observations and gallery do not establish combined installed acceptance.
+
+Exact-source `make validate-local`: **passed (exit 0)**.
+Core completed 1,294 tests with seven skips and 98.0768% coverage; iOS completed 611 tests with twelve
+skips (510 unit/seven skips and 101 UI/five skips). Mac passed 120 tests and Watch passed 35,
+with no skips. Every suite had zero failures, and all four real-server contracts passed.
+The run finished October 31 at 02:26:33.729853 UTC with all 1,103 frozen inputs unchanged;
+the runner was terminal/reaped and its owned process groups were absent. Shutdown code 149 meant
+an owned simulator was already stopped, not a validation failure.
+Fresh `SPEAKER-020` short/long native PNGs from this run were inspected: the long name truncates
+inside its column, while `00:34` and the complete synthetic cedar transcript remain readable and
+unchanged. The bound test passed; these images establish only the production row's rendered result.
+[Sanitized full validation receipt](releases/mac-speaker-name-overflow-89e-validation.json).
+The original `9a39a12` aggregate remains failed; separate focused, installed and CI results are not
+combined to relabel it. The new native row images remain diagnostics, not full-app README media.
+
+All three required checks passed on exact `89e9226` in
+[run 41156133221](https://github.com/tomqwu/ListenToMe/actions/runs/41156133221).
+The existing source-labelled hosted README passed inspection at 1,280- and 390-pixel widths:
+44 images loaded at each width, and 11 downloaded assets/manifests matched local bytes. The recorded
+review is `docs-gallery-corrected/readme-89e9226/visual-review.json` in the external evidence directory.
+This verifies the existing gallery's rendering and links, not a new combined installed screenshot.
+Final documentation changes still need content/link checks, final gallery review and their own CI.
+
+PR [#354](https://github.com/tomqwu/ListenToMe/pull/354) remains open; final review and merge remain.
+Combined installed Mac acceptance and a fresh full-app long-name capture remain open while the Mac
+is locked. Preserve the source-labelled earlier gallery and its capture manifest; do not substitute
+native component diagnostics or repeat unchanged unlock requests. Installed acceptance and release
+screenshots remain separate publication gates. No merge, production-ready or publication claim is made.

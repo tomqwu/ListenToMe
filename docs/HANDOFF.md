@@ -21,8 +21,10 @@ installed Mac inspection, simulator previews and physical acceptance. PR #353 me
 review and all three required checks on `1b275b1`. Its final native run uses `c2c450e`; later
 documentation-only commits preserve its frozen app/test/config inputs. The #334 branch now integrates
 that exact main. Only README/HANDOFF conflicted; both galleries and acceptance histories were retained.
-The existing source-bound captures are labelled by their source; combined-source validation and
-review remain pending. The original #334 regression and installed acceptance are not relabelled.
+The existing captures retain their source labels. The combined #334 checkpoint below links its
+[exact validation evidence and remaining gates](speaker-rename-acceptance.md). The original #334
+regression and `9a39a12` installed acceptance are not relabelled as acceptance of the combined
+installed app; final review and merge remain pending.
 Earlier failed aggregates remain failed, including the corrected error clipping and legacy test
 expectations. Physical phone/iPad/Watch capture, paired transfer, full VoiceOver and real OTHERS
 acceptance remain pending. This work is unreleased and is not in TestFlight 1.20.3 (43).
@@ -67,9 +69,10 @@ The integrated `9a39a12` full attempt passed Core 1,294/seven skips, iOS 606/twe
 and its simulator framework versions no longer matched. Same-source signed Debug build and four
 real-server contracts passed separately. [Exact component receipt](releases/mac-speaker-name-overflow-9a39-validation.json).
 The maintainer completed Xcode setup; first-launch/simulator checks passed at 22:43 UTC on 27B52.
-Corrected installed Mac acceptance then passed double-click/context-menu rename, Save/Cancel, blank
-refusal, full relaunch persistence, full-name tooltip and actual VoiceOver activation/Cancel/Save.
-Fresh native README captures show readable transcript text with contained long names at two window
+Corrected installed Mac acceptance on `9a39a12` then passed double-click/context-menu rename,
+Save/Cancel, blank refusal, full relaunch persistence, full-name tooltip and actual VoiceOver
+activation/Cancel/Save. Its native captures, now in the source-labelled historical README gallery,
+show readable transcript text with contained long names at two window
 widths. All eleven original archive files and the neighboring synthetic record remained unchanged.
 The owned app was quit and trashed. Cleanup was deferred at 23:05 UTC to protect another Dev
 session; the follow-up at **October 31, 00:36 UTC** completed removal of the two owned fixtures and
@@ -77,13 +80,22 @@ two derived vector files after preservation. All eleven original archive files r
 the target's later serialization changed no decoded content. The later session had already completed
 the scoped Dev permission reset, so no reset was repeated. [Cleanup follow-up](evaluations/mac-speaker-name-overflow-installed-2026-10-30.json).
 
-All three required checks passed on exact `f108857` in [CI run 41143536177](https://github.com/tomqwu/ListenToMe/actions/runs/41143536177)
-for open PR [#354](https://github.com/tomqwu/ListenToMe/pull/354). Runtime/tests/config remain unchanged
-from `9a39a12`. Fresh full validation is still pending: the October 31, 00:42–00:43 UTC attempt was
-refused by the ownership guard after simulator preparation, before `make` or tests; all 1,085 inputs
-matched and both owned devices shut down. The reviewed retry waits for the foreign native run.
-Neither this setup refusal nor passing CI turns the earlier failed aggregate into a full pass;
-PR merge and any later release remain pending.
+The historical `f108857` checkpoint passed all three checks in [CI run 41143536177](https://github.com/tomqwu/ListenToMe/actions/runs/41143536177).
+Its runtime/tests/config matched `9a39a12`. The October 31, 00:42–00:43 UTC setup attempt was then
+refused by the ownership guard before `make` or tests; all 1,085 inputs matched and both owned devices
+shut down. That refusal and the failed `9a39a12` aggregate remain preserved as distinct outcomes.
+
+The current combined candidate `89e9226` integrates workspace main `5e1a8f4`. The speaker
+control, production row and bound bitmap-test files remain byte-identical to `9a39a12`; the whole
+workspace is changed. Exact-source full validation: **passed (exit 0)**.
+[The canonical acceptance record](speaker-rename-acceptance.md) contains the complete suite counts,
+terminal/source audit, fresh native attachment inspection and linked receipt.
+All three required checks passed on `89e9226` in [CI run 41156133221](https://github.com/tomqwu/ListenToMe/actions/runs/41156133221).
+Its source-labelled hosted README passed at 1,280/390 pixels, with all 44 images loading and 11
+assets/manifests downloaded byte-identical. The combined installed Mac long-name flow and full-app
+capture remain open while the Mac is locked; the prior installed captures and fresh native row
+attachments are not substitutes. No repeated unlock request is needed. Final documentation/gallery
+checks, exact final-head CI, review and PR #354 merge remain; no merge or publication is claimed.
 
 ## TestFlight 1.20.3 (43) published — October 30, 2026
 

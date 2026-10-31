@@ -95,6 +95,11 @@ resolution. These captures and the earlier speaker-name captures below come from
 they do not establish acceptance of the combined candidate. [Source, checksums and capture limits](docs/images/workspace/unreleased-2026-10-30/manifest.json) ·
 [Behavior and validation](docs/workspace-usability.md).
 
+A fresh full-app Mac capture combining this workspace with the long-name fix remains blocked
+while the Mac is locked. The earlier installed captures retain their original source labels;
+native row-test images are diagnostics and do not complete this gallery refresh.
+[Combined validation and outstanding installed/capture acceptance](docs/speaker-rename-acceptance.md).
+
 **Mac · focused workspace and optional controls**
 
 <p align="center"><a href="docs/images/workspace/unreleased-2026-10-30/mac-workspace.png"><img src="docs/images/workspace/unreleased-2026-10-30/mac-workspace.png" width="760" alt="Unreleased Mac workspace with optional recording settings, AI models, session details and secondary Quick actions collapsed; empty demonstration conversation."></a></p>

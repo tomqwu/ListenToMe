@@ -1,0 +1,170 @@
+{
+  "source": "89e92261953640cc11ee698284daa34130bfecb1",
+  "base": "5e1a8f4fdd10faecf02cff9d1e79848f663b39e5",
+  "tree": "05bd7d8dbbf48f3843349364cc3d14340eb5c26f",
+  "finishedAt": "2026-10-31T02:26:33.729853+00:00",
+  "status": "full_local_validation_passed",
+  "command": "make validate-local BDD_BASE=5e1a8f4fdd10faecf02cff9d1e79848f663b39e5",
+  "returncode": 0,
+  "supervisorReaped": true,
+  "ownedGroupAndParentAbsent": true,
+  "supervisedSeconds": 2936.728027084,
+  "frozenInputCount": 1103,
+  "allInputsUnchangedBeforePostrunDocEdits": true,
+  "ignoredDevSigningSHA256": "9344979f8b260004bd3630cede6cb1be52ad1d2ef8d8e9a2f4cf8cd1e0caa1d3",
+  "counts": {
+    "core": {
+      "total": 1294,
+      "skipped": 7,
+      "failed": 0,
+      "coveragePercent": 98.07677689091601
+    },
+    "iosUnit": {
+      "total": 510,
+      "skipped": 7,
+      "failed": 0
+    },
+    "iosUI": {
+      "total": 101,
+      "skipped": 5,
+      "failed": 0
+    },
+    "mac": {
+      "total": 120,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUnit": {
+      "total": 29,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUI": {
+      "total": 6,
+      "skipped": 0,
+      "failed": 0
+    }
+  },
+  "bdd": {
+    "catalogScenarios": 253,
+    "structurallyValid": true,
+    "requiredNativeBindingsPassed": 591,
+    "bySuite": {
+      "core": 256,
+      "ios-unit": 125,
+      "ios-ui": 55,
+      "mac-unit": 120,
+      "watch-unit": 29,
+      "watch-ui": 6
+    },
+    "coreLogVerification": "Read-only verification of retained full log after terminal; no tests rerun."
+  },
+  "helpers": {
+    "pythonUnittestMethods": 71,
+    "byFile": {
+      "test-bdd.py": 21,
+      "test-make-pipelines.py": 6,
+      "test-ios-testflight.py": 29,
+      "test-contract-gate.py": 5,
+      "test-release-paths.py": 4,
+      "test-mac-appstore.py": 6
+    },
+    "hotkey": "PASS: Carbon identity filtering, repeat suppression, release, stop/restart, conflict and deinit",
+    "lint": "exit0 with existing warnings",
+    "shellSyntax": "passed"
+  },
+  "realServerContracts": {
+    "OllamaContractE2ETests": 2,
+    "OpenAICompatibleContractE2ETests": 2,
+    "model": "qwen3:0.6b",
+    "failed": 0
+  },
+  "native": {
+    "sessionSuccessMarkers": 3,
+    "nativeResultSummariesAgreeWithLogCounts": true,
+    "originalFilesVerifiedInOriginalAndCopiedBundles": 2031,
+    "postSummaryAddedSQLiteCaches": 3,
+    "noOriginalFileChangedOrMissing": true,
+    "devices": "Both owned destinations confirmed Shutdown; final shutdown149 meant alreadyShutdown, not a failed test."
+  },
+  "render": {
+    "scenario": "SPEAKER-020",
+    "test": "MacTranscriptInteractionTests/testLongSpeakerNameDoesNotPaintOverAdjacentTranscript",
+    "nativePassed": true,
+    "nativeSeconds": 0.847,
+    "speakerColumnPoints": 100,
+    "changedPixelsInside": 1201,
+    "changedPixelsBeyondColumn": 0,
+    "unchangedOriginalTranscriptInkPixels": 2888,
+    "visualInspection": "Both native originals viewed by independent auditor, root and separate reviewer; long name visibly ellipsized inside column, complete original transcript and00:34 readable/unchanged. Native row diagnostics, not whole-app gallery.",
+    "images": [
+      {
+        "label": "short",
+        "file": "external evidence: fresh-speaker-render-attachments/88DFD918-6216-4922-89D1-2BB4F18762E7.png",
+        "sha256": "e3c0a5268d1574955ca9dc395536be3e6bd5f1837053f8aa03182db8a8e974f9",
+        "dimensions": [
+          1200,
+          600
+        ]
+      },
+      {
+        "label": "long",
+        "file": "external evidence: fresh-speaker-render-attachments/FDB699E3-A09E-4AF5-9FA0-514167EAC4EA.png",
+        "sha256": "0070245a98b86b615d289d0a66b698ee8f5ec1aaf60c901a66e30ba66b4e91f4",
+        "dimensions": [
+          1200,
+          600
+        ]
+      }
+    ]
+  },
+  "translation": {
+    "actualBranch": "installed-real-model",
+    "target": "zh-Hans",
+    "seconds": 1.291379792,
+    "scope": "One synthetic Mac summary preserves120dollar budget,Thursday and Swift code; no broad language/phone quality claim."
+  },
+  "ci": {
+    "source": "89e92261953640cc11ee698284daa34130bfecb1",
+    "url": "https://github.com/tomqwu/ListenToMe/actions/runs/41156133221",
+    "threeRequiredChecks": "success",
+    "scope": "Exact89e CI; any later docs-only head requires its own checks."
+  },
+  "signedDebugArtifact": {
+    "bundleIdentifier": "com.tomwu.ListenToMe.dev",
+    "version": "1.4.4",
+    "build": "14",
+    "strictDeepSignatureExit": 0,
+    "payloadFiles": 34,
+    "payloadManifestSHA256": "03a32977b6eebdd6048fe580820949897381f809a6a0167d3206888cd791380e",
+    "archiveSHA256": "ef9d20796db2c2485ac848de04481896e7662719b5a9b31a610989a9f39f501e",
+    "archiveBytes": 38205440,
+    "archivedBytesModesSymlinksVerified": true,
+    "launched": false,
+    "scope": "Normal Debug Dev build only; no installed combined-source/Store/distribution proof."
+  },
+  "boundaries": {
+    "historicalInstalledAcceptance": "Actual9a39a12speaker rename/persistence/VoiceOver acceptance is retained; unchanged speaker-layout component is byte-identical in89e. Other workspace runtime came from merged5e; no fresh combined installed claim.",
+    "combinedInstalledAcceptance": "open; not established by automated tests/signature",
+    "combinedFullAppMacGallery": "open/blocked by interactive Mac availability; source-labelled9a speaker and1b workspace images retained. Fresh row PNGs are QA only.",
+    "hostedREADME": "Root-reviewed89e44images at1280/390,11selectedfiles/manifests downloaded byte-identically; not combined installed or Apple listing acceptance.",
+    "publication": "No merge, upload, notarization, physical acceptance or production-ready claim from this receipt."
+  },
+  "preservedEarlierFailures": [
+    "Original9a39aggregate failed at Watch setup/Xcode component mismatch; its passed components/separatee2e remain distinct.",
+    "f108setup refused after simulator prep beforemake/tests due foreign owner;1103current run does not rewrite its1085input evidence.",
+    "Initial postrun audit assumed copied bundle inventory stayed exact; xcresulttool summary added database.sqlite3 only. Failure/diffs retained; no failed product test or altered original evidence."
+  ],
+  "evidence": {
+    "directory": "2026-10-30/listentome-mac334-name-overflow/full-validation-preparation-89e9226",
+    "independentAuditSHA256": "4f3b0e8157a9b6f0adf91497dec621e15fd20d379b3d72ece474026d1938d423",
+    "validationStateSHA256": "dd5811a501629a992fd38f883a961912b8af25d192f37a70fac9fb34e71e1bfe",
+    "rawLogSHA256": "8b80f3b2be206d8cec1c2f7438a6546cd47316bd312b1cb4011e1534c1353509",
+    "preEditSourceAndNativePreservationSHA256": "2e7edff20769ad9d2d0491ac138f5f7abbf667c24445452d8d9fbcce9679714f",
+    "signedArtifactReceiptSHA256": "1dc7b7a1b3d44059b5b939848d34d3486a315fa04e90e434396bad418c6c2cf3",
+    "maps": "Full1103input and2031native file maps retained externally in validation-state.json; full signed app payload map retained in normal-debug-artifact/payload.json.",
+    "initialInventoryAuditSHA256": "1e0381c0282209788984605e6c1f0c8b3f9db699dfae7775d3dac4042410e741"
+  },
+  "merged": false,
+  "published": false
+}
