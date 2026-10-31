@@ -19,9 +19,9 @@ final class MobileOllamaEndpointUITests: XCTestCase {
         XCTAssertTrue(status.label.contains("previous server is kept"))
         capture(app, "HTTP address rejected with recovery instructions")
         revealSettingsControl(field, in: form, towardTop: true)
-        field.tap(); field.press(forDuration: 1)
-        if app.menuItems["Select All"].waitForExistence(timeout: 2) { app.menuItems["Select All"].tap() }
-        else { app.buttons["Select All"].tap() }
+        field.tap()
+        // Select the entire address without depending on the transient editing menu or caret position.
+        field.typeKey("a", modifierFlags: .command)
         field.typeText("https://studio.local:11434/ollama?token=test-value")
         XCTAssertEqual(field.value as? String, "https://studio.local:11434/ollama?token=test-value")
         field.typeText("\n")

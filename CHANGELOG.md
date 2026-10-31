@@ -13,6 +13,10 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## Repository tooling (unreleased)
 
+- Select rejected server addresses with the native keyboard command in endpoint UI tests, keeping
+  exact replacement, recovery and privacy assertions independent of transient editing menus.
+  Add explicit Ollama and OpenAI-compatible endpoint BDD scenarios; app behavior is unchanged.
+
 - Require current README screenshots with device-grouped layouts, full-size links and capture
   provenance. Add a concise native Duo preview and a BDD capture check that rejects clipped sample
   text. That earlier preview changed only its optional short fixture; default fixture data and
