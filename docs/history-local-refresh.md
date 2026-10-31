@@ -1,6 +1,7 @@
 # Explicit local History refresh — #223
 
-October 30, 2026: implementation in an isolated follow-up checkout, not merged or released.
+The original October 30 implementation subsequently merged in PR #351. The build-44 follow-up
+below is locally validated and remains unpublished.
 This does not restore the withdrawn MPNet runtime or establish additional-language search quality.
 
 ## Build 44 landscape capture follow-up — October 31
@@ -11,15 +12,28 @@ after a 13-point upward drag, while its other four methods passed. Its native be
 activity tree and original results are preserved. iPad and Watch capture profiles were not started.
 [Sanitized failure receipt](evaluations/ios-1.20.4-history-capture-failure-2026-10-31.json).
 
-`HISTORYREFRESH-010` now explicitly includes compact and larger phones and wide iPads. Its test uses
-a minimum 44-point upward drag, capped at one third of the viewport. Whole-row containment,
-search separation, exact query and conversation open/reopen assertions remain intact; diagnostic
-failure text includes both frames. The History method subsequently passed on both owned phones.
-The portrait-first concise preview passed on Max but failed on Pro because status content precedes
-its answer in the Quick scroll view. The smaller-phone failure is preserved. A bounded Quick-only
-scroll now brings the answer into view when needed, with all text/containment checks retained and
-the transcript rechecked afterward. This correction still needs native execution. These changes
-affect only tests, not app layout or fixture text; the build-44 gallery and distribution remain incomplete.
+`HISTORYREFRESH-010` covers compact and larger phones and adaptive Duo or wide iPad workspaces.
+Its test uses a minimum 44-point upward drag, capped at one third of the viewport. Whole-row
+containment, search separation, exact query and conversation open/reopen assertions remain intact;
+diagnostic failure text includes both frames. The corrected History method passed on both phones.
+
+The portrait-first concise preview passed on Max but initially failed on Pro because status content
+precedes its answer in the Quick scroll view. The bounded Quick-only scroll correction then passed
+the two-method focused Pro retry on `9460f00`; complete local validation on that source also passed
+History and preview on Pro Max, where the answer fits without scrolling. Both earlier failures remain
+preserved. These are test corrections, with no app layout or fixture-text change.
+
+The later `9460f00` capture exposed a separate initial iPad mini precondition: its compact-height
+landscape workspace correctly used Duo, while the test expected a wide container from device idiom.
+Only that initial assertion failed; later History outcomes completed. Source `ca7ab57` accepts either
+existing adaptive container and passed the same focused mini method. Its fresh seven-profile capture
+then passed all **21 methods**, with **71 unedited native originals** preserved and independently
+inspected for individual gallery suitability. Some remain QA-only; completing capture does not make
+every image suitable for a listing. Final complete `make validate-local` then passed on the same
+`ca7ab57` source: the 261-scenario catalog validated and all 602 required bound selectors passed.
+[Current full receipt](evaluations/ios-1.20.4-full-ca7ab57-2026-10-31.json), [capture receipt](evaluations/ios-1.20.4-release-captures-2026-10-31.json) and
+[README capture manifest](images/ios/release-1.20.4/manifest.json) preserve those separate source-bound results.
+Final documentation/CI/merge, hosted README inspection and distribution remain separate gates.
 
 **Refresh search** in Mac and iPhone/iPad History replaces the local Apple embedding adapter and
 rebuilds derived vectors, including unchanged records previously cached without vectors. Ordinary
