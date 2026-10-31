@@ -1,0 +1,22 @@
+{
+  "submittedAt": "2026-10-31T17:01:17.526949+00:00",
+  "reviewSubmissionId": "6048f839-fd00-43f6-be16-21a87b0d1252",
+  "versionId": "1283d670-5337-4ca3-a3de-105097770162",
+  "version": "1.20.4",
+  "build": "44",
+  "buildId": "688d5133-1488-410e-809f-3df04ec08bab",
+  "artifactSource": "08810e8aca007fd97f2f4633e3fbeea5c1f92731",
+  "primaryLocale": "en-US",
+  "screenshots": 46,
+  "releaseType": "MANUAL",
+  "reviewState": "WAITING_FOR_REVIEW",
+  "versionState": "WAITING_FOR_REVIEW",
+  "physicalAcceptance": "explicitly deferred; not verified",
+  "maintainerInstruction": "Submit iOS/Watch now; defer physical acceptance",
+  "publiclyAvailable": false,
+  "manualReleasePerformed": false,
+  "physicalDeviceAcceptanceVerified": false,
+  "acceptanceExceptionScope": "iPhone/iPad and embedded Watch build44 review submission only",
+  "sourceAttribution": "Artifact source comes from reviewed upload/tag evidence; Apple confirms the selected build relationship.",
+  "evidenceIdentifier": "2026-10-31/ios1204-review-submission"
+}

@@ -1,5 +1,25 @@
 # Delivery handoff — October 31, 2026
 
+## App Store review submitted — October 31, 2026, 17:01 UTC
+
+The maintainer explicitly instructed **“Submit iOS/Watch now; defer physical acceptance”.**
+Apple accepted iOS **1.20.4 (44)**, including the embedded Watch companion, for review.
+Submission `6048f839-fd00-43f6-be16-21a87b0d1252` and the version both read
+**WAITING_FOR_REVIEW**. Source remains `08810e8`; English (US), all 46 processed/download-verified
+screenshots and **MANUAL** release remain unchanged. Physical acceptance is deferred, not passed.
+No approval or public release is claimed, and no manual public release was performed.
+[Sanitized review receipt](releases/ios-1.20.4-build44-review.json).
+
+Mac **1.5.0 (15)** was freshly archived/exported from merged `0c50a63`. Its distribution app and
+installer signatures, sandbox/profile, en-US region and Intel/Apple silicon architectures passed
+checks. It is a local candidate, not an accepted upload. Fresh Mac screenshots, installed sandbox
+GUI/actual OTHERS and external selections across relaunch remain pending; no Mac review was submitted.
+[Candidate receipt](evaluations/mac-appstore-1.5.0-candidate-2026-10-31.json).
+
+Backlog implementation remains paused. The release schedule was deleted at the maintainer's request;
+no goal or recurring publication job was recreated. The checkpoint below predates this explicit
+iOS acceptance exception and submission and remains historical evidence.
+
 ## Pause checkpoint — October 31, 2026, after 15:03 UTC
 
 The maintainer requested: **“after this publish to store review, let's pause this work”.** The
