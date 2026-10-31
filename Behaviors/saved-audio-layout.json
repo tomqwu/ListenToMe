@@ -24,6 +24,43 @@
           "test": "MobileSavedAudioUITests/testSavedAudioHeaderAtLargestTextKeepsTranscriptUsable"
         }
       ]
+    },
+    {
+      "id": "AUDIOVIEW-002",
+      "name": "Read delayed Mac saved-audio lines in recording order and play the original part",
+      "given": "a saved Mac conversation contains delayed finalized microphone and system lines, equal timestamps, an untimed boundary, legacy lines, duplicate restored segment IDs and a subsequent recording with retained local audio",
+      "when": "the reader expands History's Play from a line list, selects the rendered lines and closes that audio view",
+      "then": "timed lines within each explicit recording block appear in stable chronological order while untimed boundaries and legacy arrival order remain intact; each actual row plays its original source file and recording-relative offset, canonical transcript and saved files remain unchanged, and leaving the view stops playback",
+      "covers": [
+        "App/MacSavedAudio.swift",
+        "SharedPlatform/SavedAudioPlayer.swift",
+        "Sources/ListenToMeCore/TranscriptPresentation.swift",
+        "project.yml"
+      ],
+      "bindings": [
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSavedAudioOrderTests.swift",
+          "test": "MacSavedAudioOrderTests/testDelayedRowsRenderChronologicallyAndPlayOriginalSourceAndOffset"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSavedAudioOrderTests.swift",
+          "test": "MacSavedAudioOrderTests/testUntimedAndLegacyBoundariesStayInPlaceAndLeavingStopsPlayback"
+        },
+        {
+          "suite": "mac-unit",
+          "file": "macOSTests/MacSavedAudioOrderTests.swift",
+          "test": "MacSavedAudioOrderTests/testRestoredDuplicateIDsKeepDistinctOriginalAudioTargets"
+        }
+      ],
+      "manual": {
+        "reason": "Native controls and silent temporary recordings prove display and seek mapping, not acoustic two-source acceptance or an installed production app.",
+        "steps": [
+          "In the source-matched installed Mac candidate, inspect the expanded saved-audio list and confirm a delayed line plays the intended retained recording.",
+          "Keep issue 336's independent near-end, overlap, repeated speech and physical route matrix open until separately observed."
+        ]
+      }
     }
   ]
 }

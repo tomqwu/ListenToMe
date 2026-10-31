@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "scope": "Mac saved-audio display ordering retains canonical playback source/offset identity; complete local validation on exact Watch-integrated source",
+  "scenario": "AUDIOVIEW-002",
+  "source": "347ed051715f9b3aa21942a48e98d222ea778bff",
+  "base": "01774319ac636ce853481b9f2fefdd7cb2525d7b",
+  "sourceTree": "7de03470372d0217a830e93f4013974c2496b94f",
+  "startedUTC": "2026-10-31T04:14:08.581082+00:00",
+  "finishedUTC": "2026-10-31T05:02:48.641636+00:00",
+  "command": "make validate-local BDD_BASE=01774319ac636ce853481b9f2fefdd7cb2525d7b",
+  "result": {
+    "exit": 0,
+    "terminalReaped": true,
+    "elapsedSeconds": 2916.9678876670077,
+    "allFrozenInputsUnchanged": 1112,
+    "failedNativeCases": 0
+  },
+  "tests": {
+    "core": {
+      "tests": 1294,
+      "skipped": 7,
+      "failed": 0,
+      "coveragePercent": 98.07706924070837
+    },
+    "iosUnit": {
+      "tests": 512,
+      "skipped": 7,
+      "failed": 0
+    },
+    "iosUI": {
+      "tests": 101,
+      "skipped": 5,
+      "failed": 0
+    },
+    "mac": {
+      "tests": 123,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUnit": {
+      "tests": 29,
+      "skipped": 0,
+      "failed": 0
+    },
+    "watchUI": {
+      "tests": 6,
+      "skipped": 0,
+      "failed": 0
+    },
+    "toolingHelperMethods": 71,
+    "hotkeyShellChecks": "passed",
+    "localLLMContracts": {
+      "OllamaContractE2ETests": 2,
+      "OpenAICompatibleContractE2ETests": 2,
+      "model": "qwen3:0.6b",
+      "failed": 0
+    }
+  },
+  "bdd": {
+    "catalogScenarios": 255,
+    "passingRequiredBoundSelectors": {
+      "core": 256,
+      "ios-unit": 127,
+      "ios-ui": 55,
+      "mac-unit": 123,
+      "watch-unit": 29,
+      "watch-ui": 6
+    },
+    "totalRequiredBoundSelectors": 596,
+    "catalogVsExecution": "Catalog structure and passing binding verification are distinct; Core bindings additionally verified from the completed full log without rerunning tests."
+  },
+  "focusedMethods": [
+    {
+      "test": "MacSavedAudioOrderTests/testDelayedRowsRenderChronologicallyAndPlayOriginalSourceAndOffset()",
+      "result": "Passed",
+      "durationSeconds": 1.7531330585479736,
+      "nativeExecutionCount": 1,
+      "detailSHA256": "3022b827cd975224c5779ccf0d0801a4ce2c2773ffa147405ef12dbae5e9aa6e",
+      "expandedRender": {
+        "file": "fresh-saved-audio-attachments/7B335D78-5FBE-49E7-836C-E282CAF1C5B6.png",
+        "sha256": "a9f8e243a4aa438d9939a83686dfcec8f1a1921906b7c86c4b506ea712997dd3",
+        "width": 1520,
+        "height": 720,
+        "visuallyInspected": true
+      },
+      "mediaAttachments": true
+    },
+    {
+      "test": "MacSavedAudioOrderTests/testRestoredDuplicateIDsKeepDistinctOriginalAudioTargets()",
+      "result": "Passed",
+      "durationSeconds": 1.3574860095977783,
+      "nativeExecutionCount": 1,
+      "detailSHA256": "40b1c2194192963678f75e4f8ce87afd799f037216f19eaa6e7484624585eafb",
+      "expandedRender": {
+        "file": "fresh-saved-audio-attachments/51867761-D677-4DD2-BA5C-48770CB1EE67.png",
+        "sha256": "71e239756228bde494571bb27a62cda571b51e806bbd4402223547f3ea82a061",
+        "width": 1520,
+        "height": 720,
+        "visuallyInspected": true
+      },
+      "mediaAttachments": true
+    },
+    {
+      "test": "MacSavedAudioOrderTests/testUntimedAndLegacyBoundariesStayInPlaceAndLeavingStopsPlayback()",
+      "result": "Passed",
+      "durationSeconds": 1.3943850994110107,
+      "nativeExecutionCount": 1,
+      "detailSHA256": "a7dbf322e64e61e53a45f5b08f60b0c8478c4fab64154cd06b904f465ccde1a1",
+      "expandedRender": {
+        "file": "fresh-saved-audio-attachments/33611C12-FF1E-4F85-992B-BF7BC171E071.png",
+        "sha256": "48d76855d7a070ba8ee3fef6e05edb76e85d3e98b4f8a43ba9a6dba14bbfddcd",
+        "width": 1520,
+        "height": 720,
+        "visuallyInspected": true
+      },
+      "mediaAttachments": true
+    }
+  ],
+  "integrity": {
+    "originalNativeResultFilesVerified": 2093,
+    "allOriginalAndPreservedFileBytesMatch": true,
+    "derivedSummarySQLiteCachesSeparatelyRecorded": 3,
+    "executedTestBundlesPreserved": 6,
+    "testAndHostPayloadFilesPreserved": 111,
+    "stableDevSigningSHA256": "9344979f8b260004bd3630cede6cb1be52ad1d2ef8d8e9a2f4cf8cd1e0caa1d3",
+    "ownedProcessesAbsent": true,
+    "ownedSimulatorsConfirmedShutdown": true,
+    "shutdownCommand149": "Both devices were already Shutdown; confirmed by fresh available-device readback."
+  },
+  "normalMacDebugArtifact": {
+    "bundleIdentifier": "com.tomwu.ListenToMe.dev",
+    "version": "1.4.4",
+    "build": "14",
+    "strictDeepSignatureExit": 0,
+    "archiveExtractedSignatureExit": 0,
+    "payloadFiles": 34,
+    "preservedArchiveSHA256": "27ce0a23a3f1d8312980a9f7b34a89d23c633aeadca6d783f5c0f7f6c58c4675",
+    "archiveBytesModesSymlinksVerified": true,
+    "notLaunched": true,
+    "looseCopyAudit": "Loose Documents .app copy failed strict signature due to filesystem metadata; failure preserved separately. Original app and exact archive extracted into an owned temporary directory passed. No source/app permissions changed. A metadata-read helper incompatibility was corrected without rerunning validation."
+  },
+  "requiredCI": {
+    "source": "347ed051715f9b3aa21942a48e98d222ea778bff",
+    "runURL": "https://github.com/tomqwu/ListenToMe/actions/runs/41167693082",
+    "threeRequiredChecks": "SUCCESS",
+    "readbackUTC": "2026-10-31T04:50:49.418Z"
+  },
+  "freshNativeRenderReview": {
+    "reviewers": [
+      "review_merge_acceptance",
+      "root"
+    ],
+    "expandedImages": 3,
+    "allNativePNGAttachmentsPreserved": 6,
+    "totalAttachmentsPreserved": 31,
+    "result": "Delayed lines are visibly ordered within recordings; restored duplicate IDs remain separate; untimed/legacy boundaries retain original order; full row labels are legible without clipping. Native assertions separately verify actual click/playback source and offsets, Stop on leaving, and unchanged archive/audio bytes.",
+    "scope": "Production NSHostingView with synthetic silent recordings; component QA only."
+  },
+  "historicalEvidencePreserved": [
+    "First5fef840 native attempt remains a harness failure, not a product red.",
+    "Corrected test-only eec9a112 produced genuine ordering RED:two methods,six assertions;untimed/legacy control passed.",
+    "Unchanged tests passed after two-file d36b212 runtime fix:three native methods and145 existing Core tests,1,083 stable inputs.",
+    "Current347ed05 full result is fresh combined validation, not relabelled historical installed or acoustic acceptance."
+  ],
+  "readmeGallery": "Existing source-labelled gallery retained. A source-matched installed History full-app capture remains blocked/open while the Mac is locked; fresh native component images do not substitute for the README refresh. No repeated unlock request.",
+  "acceptanceLimits": [
+    "Source-matched installed full-app History playback and gallery refresh",
+    "Original336 acoustic near-end, overlapping/repeated speech, headphones, real YOU/OTHERS audio and physical route recovery matrix",
+    "Physical paired-Watch/file-protection acceptance remains separate;355 merged fix does not close181",
+    "PR356 merge,issue336closure,publication or production readiness"
+  ],
+  "evidenceRoot": "/Users/tomwu/Documents/Codex/2026-10-30/listentome-mac336-saved-audio-order/full-validation-preparation-347ed05/",
+  "evidenceHashes": {
+    "validation-state.json": "9716fc17db0c79aceb4013b70c08fba4c9690a065599f72c42529470dcd0d996",
+    "validation/runner-state.json": "2c8af6b3aa6c661b087b4c445d0a3313adb0bb9c78cf8d43e94dc2d3496add16",
+    "validation/reference.log": "745f110b4ad5ef3708df6eddd5743bfbaa8113c7201551dcb38578dd1ea4da7b",
+    "post-terminal-source-and-native-preservation.json": "64bb87605e60c85ac0ee4e85775b9393a32a35e5a219043b609d90026de2e242",
+    "native-payloads/preservation.json": "e690c77926a72dfd072188a6d8298ac325a18eefbbd700719d21b4b778f9967d",
+    "normal-debug-artifact/receipt.json": "0e16d537c08d815b3b6166e8dad45e8658bd9e265274d8ef72716291e3efa743",
+    "normal-debug-artifact/loose-copy-signature-audit.json": "cc6453916aec360698925ef1056b13ab3e915c863f21078007357b863e5173d5",
+    "post-run-core-binding-verification.txt": "8b9a16d7816cec9343f61e7c24c720207d070785251936b08b6d1e6f59a9dde2",
+    "saved-audio-native-details/tests.json": "f74e4ce5a88532852922161c763603ae28cf0652e320a6f56c21ea748b994ef4",
+    "saved-audio-native-details/delayed.json": "3022b827cd975224c5779ccf0d0801a4ce2c2773ffa147405ef12dbae5e9aa6e",
+    "saved-audio-native-details/duplicate.json": "40b1c2194192963678f75e4f8ce87afd799f037216f19eaa6e7484624585eafb",
+    "saved-audio-native-details/boundaries.json": "a7dbf322e64e61e53a45f5b08f60b0c8478c4fab64154cd06b904f465ccde1a1",
+    "fresh-saved-audio-attachments/manifest.json": "6320e24a53fea7ffe6ffc9cada5a8abac074a1e0a1e2dc1938ab59a1548b38d5",
+    "native-render-review.json": "b9746f76696c8e86804b79f091a56f6ffac2c08fac292c669a6b8f317fb9c64c",
+    "root-rendered-review.json": "dbd61b9f7a3a86f77e7080a5f965f8b8402af195cba1a0669d33840f3514b316",
+    "hosted-ci-readback.json": "c893bab0e9bc0fcb1a13a1650b4065d190011d6f460ee155eb1cd2ccba461c76",
+    "independent-runner-delta-review.json": "f7a960192352c5174b149cafe67eb3f5533434b6b55453b3cc506dc8013f23c6",
+    "independent-terminal-audit.json": "9da708d3cb11225025d287f40a25cb9c1b6dbe9366f1a79bbd177420ca8bf463"
+  },
+  "nativeMacTestHost": {
+    "operatingSystemVersion": "27.0.1",
+    "architecture": "arm64",
+    "scope": "Actual local macOS native test execution; machine identifier omitted."
+  },
+  "independentTerminalAuditSHA256": "9da708d3cb11225025d287f40a25cb9c1b6dbe9366f1a79bbd177420ca8bf463"
+}

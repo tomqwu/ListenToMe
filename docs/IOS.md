@@ -60,7 +60,9 @@ Full `make validate-local` then passed on integrated `989a6b4`, base `946cb7e`: 
 Both redelivery methods passed without skips; all 1,109 inputs matched and the process reaped.
 [Audited full receipt](evaluations/watch-inbox-redelivery-full-2026-10-31.json).
 All three required checks passed on `989a6b4` in [run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169).
-Final documentation review/checks and PR #355 merge remain. Physical file protection and paired-Watch
+Final docs head `f0f8d26` passed independent review and all three checks in
+[run 41166381562](https://github.com/tomqwu/ListenToMe/actions/runs/41166381562); PR #355 merged at
+`0177431` and matching branches were deleted. Physical file protection and paired-Watch
 retention/reconnection acceptance remain pending. No new release or #181 closure is claimed.
 
 ## Unreleased explicit local History refresh

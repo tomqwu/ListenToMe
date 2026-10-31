@@ -55,15 +55,17 @@ The supervised process reaped and both owned simulators were confirmed Shutdown;
 result bundles' derived SQLite summary caches are recorded separately from the original files.
 [Audited full result and source/artifact preservation](evaluations/watch-inbox-redelivery-full-2026-10-31.json).
 All three required checks passed on `989a6b4` in [run 41163072169](https://github.com/tomqwu/ListenToMe/actions/runs/41163072169).
-PR [#355](https://github.com/tomqwu/ListenToMe/pull/355) remains open for final documentation review/checks
-and merge; later docs-only changes do not imply a new full runtime run.
+Final docs head `f0f8d26` passed independent review and all three checks in
+[run 41166381562](https://github.com/tomqwu/ListenToMe/actions/runs/41166381562).
+PR [#355](https://github.com/tomqwu/ListenToMe/pull/355) merged at `0177431`; matching branches were
+deleted. Later docs-only changes do not imply a new full runtime run.
 
 This adds **iOS simulator** filesystem coverage, not physical file-protection, WatchConnectivity
 or paired-Watch acceptance. Pairing/reconnection, wrist-down,
 low-storage and opt-in retention acceptance remain open; recovering index 2 does not prove
 transcription/drain completion while earlier chunks are missing. No visible UI changed, so the
 existing README gallery needs link verification rather than unrelated recapture. #181 remains open;
-PR merge and publication are not established by these tests or CI.
+The merge is confirmed separately; this fix is not yet published.
 
 ## Historical TestFlight checkpoint — 1.20.2 (42)
 

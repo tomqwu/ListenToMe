@@ -62,6 +62,15 @@ final class MacSavedAudio {
     var library: SavedAudioLibrary { runs.recorder.library }
     @ObservationIgnored private var activeObserver: (any NSObjectProtocol)?
 
+    /// Isolated native-view tests supply a temporary library; never open user storage,
+    /// install app observers or apply retention while constructing that test owner.
+    init(library: SavedAudioLibrary) {
+        enabled = false
+        retentionDays = 0
+        runs = MacSavedAudioRuns(recorder: SavedAudioRecorder(library: library))
+        playback = SavedAudioPlayback(library: library)
+    }
+
     private init() {
         enabled = SavedAudioPolicy.isEnabled()
         retentionDays = SavedAudioPolicy.retentionDays()
@@ -214,8 +223,10 @@ struct MacSavedAudioSection: View {
     }
 
     private var seekableLines: [SeekableLine] {
-        (record.segments ?? []).enumerated().compactMap { index, segment in
-            audio.playback.target(for: segment, index: index).map {
+        let canonical = record.segments ?? []
+        return TranscriptPresentation.orderedIndices(canonical).compactMap { index in
+            let segment = canonical[index]
+            return audio.playback.target(for: segment, index: index).map {
                 SeekableLine(id: index, segment: segment, target: $0)
             }
         }

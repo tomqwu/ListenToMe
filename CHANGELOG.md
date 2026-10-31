@@ -213,6 +213,10 @@ Published to TestFlight from `cbd2e454dbf502df5832dc3654ee2d284f147380`. Apple a
 
 ## macOS (unreleased since 1.4.4)
 
+- Show delayed saved-audio lines in stable chronological order within each recording in History's
+  **Play from a line** list. Keep each row linked to its original audio part and offset, including
+  restored duplicate IDs; preserve untimed/legacy boundaries and the saved transcript. (#336)
+
 - Keep optional recording settings, AI models and session details in native disclosures. Leave
   answer and recap directly visible while placing six secondary Quick actions under More Quick actions.
 
