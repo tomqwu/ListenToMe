@@ -6,6 +6,7 @@ RECORD AND REVIEW
 • Transcribe microphone speech on-device using Apple's speech technology. Supported languages and engines depend on your device.
 • Optional on-device speaker identification adds numbered labels you can rename. Similar voices, short replies and group conversations may be misidentified; review the labels.
 • Choose a supported transcription language, or use Automatic to detect and follow language changes. Mixed-language sentences may be less accurate.
+• Translate completed speech and summaries on-device while keeping the original text and speaker labels. Available pairs depend on your device and installed language packs.
 • Add domain vocabularies and My terms for names and jargon. Recognition hints do not guarantee correct spelling. Optional AI correction lets you review and restore the original text.
 • Turn on Save audio recordings before listening to retain audio for playback after Stop. Earlier unsaved audio cannot be recovered. Re-transcribe retained audio on-device, preview it and replace the transcript when ready.
 
@@ -27,4 +28,4 @@ Use Apple Intelligence where supported and enabled, your own local Ollama or Ope
 PRIVATE BY DEFAULT
 Speech recognition, speaker analysis and search run on-device. The app does not upload your audio. Retaining audio is optional and retained audio is excluded from backups. Conversation backups follow your settings. Choosing cloud AI sends relevant text and context to that provider; choose an on-device provider to keep inference local. API keys are stored in this device's Keychain. Privacy and support links are in Settings.
 
-Requires iOS or iPadOS 26 or later. Available features depend on hardware, language, permissions and model readiness; some on-device models require an initial download. Apple Watch is not included in this version. Recording uses the foreground microphone and does not capture other apps or phone calls. Review transcripts, speaker labels and AI output for accuracy.
+Requires iOS or iPadOS 26 or later. Available features depend on hardware, language, permissions and model readiness; some on-device models require an initial download. The Apple Watch companion records from its microphone and transfers recordings to its paired iPhone. An established microphone recording can continue through screen lock or app switching until Stop or an interruption; optional AI pauses while inactive. The app does not capture other apps or phone calls. Review transcripts, speaker labels and AI output for accuracy.
