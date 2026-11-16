@@ -20,7 +20,9 @@ extension XCTestCase {
             return
         }
         let containerFrame = scroll.frame
-        let deadline = Date().addingTimeInterval(360)
+        // The largest-text history grows with every release (about 90,000 pt at 1.20.5); progress, not
+        // this ceiling, decides success, and a stall still fails after four unchanged readings.
+        let deadline = Date().addingTimeInterval(540)
         var previousDistance: CGFloat?
         var unchanged = 0
         while Date() < deadline {
