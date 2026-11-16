@@ -707,6 +707,12 @@ iPhone (simulator is enough):
    JSON with the conversation's language. An imported-notes conversation offers no subtitles.
 3. An Apple Watch conversation's subtitles start near 00:00:00 and follow the watch recording (watch
    builds only: the watch app is not embedded yet, #181).
+4. **Share what you choose.** With a Quick summary, a Full summary and saved audio, **More → Share**
+   lists Quick summary, Full summary, Whole conversation and Audio. **Copy** Quick summary and paste it
+   into Notes: title, date and only that summary, with no Markdown markers or transcript. Full summary
+   does the same with the full summary; Whole conversation includes the transcript; Audio offers the
+   `.m4a` files. A new conversation with only a transcript offers Whole conversation alone. In History,
+   swipe a row right and touch and hold it: both offer the same choices, and each opens the share sheet.
 
 ## Automatic conversation titles (#221)
 
@@ -837,8 +843,8 @@ iPhone (a physical device: the simulator cannot record; steps 1 and 7 also run i
 4. **Language switch and headset.** With Automatic language, speak another language until it switches,
    and connect AirPods mid-recording. After Stop, a line after the switch still plays its own words.
    Speaker labels and the language status behave as without the setting.
-5. **Export.** **Share audio** in the player (and History's touch-and-hold menu) offers the `.m4a`
-   files; AirDrop one to a Mac and play it in QuickTime.
+5. **Export.** **Share audio** in the player (and **Share → Audio** in More and in History's
+   touch-and-hold menu) offers the `.m4a` files; AirDrop one to a Mac and play it in QuickTime.
 6. **Deletion.** Delete the conversation in History: its audio is gone (Settings' space used drops).
    Record another, then **Delete all saved audio**: transcripts stay, the play button disappears.
    Record again, then **Delete all conversations** (#220): Settings shows no saved audio.

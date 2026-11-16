@@ -6,7 +6,8 @@ struct MobileHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var pendingDeletion: SessionRecord?
     @State private var showDeletion = false
-    @State private var sharing: SessionRecord?
+    @State private var choosingShare: SessionRecord?
+    @State private var sharing: ConversationSharePayload?
     @State private var query = ""
     @State private var pendingWatchDeletion: WatchInboxRow?
     @State private var showWatchDeletion = false
@@ -57,21 +58,20 @@ struct MobileHistoryView: View {
                                 Button("Delete", systemImage: "trash") { confirmDeletion(record) }.tint(.red)
                             }
                             .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                Button("Share", systemImage: "square.and.arrow.up") { sharing = record }
+                                Button("Share", systemImage: "square.and.arrow.up") { choosingShare = record }
                                     .tint(MobileStyle.accent)
                             }
                             .contextMenu {
-                                Button("Share", systemImage: "square.and.arrow.up") { sharing = record }
-                                Menu("Export as", systemImage: "doc.badge.arrow.up") {
-                                    ConversationExportLinks(record: record)
+                                ConversationShareMenu(contents: session.shareContents(for: record)) { content in
+                                    sharing = session.sharePayload(content, for: record)
                                 }
-                                let audio = session.savedAudio.fileURLs(for: record.id)
-                                if !audio.isEmpty {
-                                    ShareLink(items: audio) { Label("Share audio", systemImage: "waveform") }
+                                Menu("Export as", systemImage: "doc.badge.arrow.up") {
+                                    ConversationExportLinks(record: record, share: { sharing = $0 },
+                                                            failed: { session.message = $0 })
                                 }
                                 Button("Delete", systemImage: "trash", role: .destructive) { confirmDeletion(record) }
                             }
-                            .accessibilityAction(named: "Share") { sharing = record }
+                            .accessibilityAction(named: "Share") { choosingShare = record }
                             .accessibilityAction(named: "Delete") { confirmDeletion(record) }
                     }
                 } footer: {
@@ -102,10 +102,16 @@ struct MobileHistoryView: View {
             } message: { _ in
                 Text("Text already transcribed stays in History.")
             }
-            .sheet(item: $sharing) { record in
-                ConversationShareSheet(text: MobileSession.readableShareText(for: record))
-                    .presentationDetents([.medium, .large])
+            .confirmationDialog("Share", isPresented: Binding(get: { choosingShare != nil },
+                                                              set: { if !$0 { choosingShare = nil } }),
+                                titleVisibility: .visible, presenting: choosingShare) { record in
+                ForEach(session.shareContents(for: record)) { content in
+                    Button(content.title) { sharing = session.sharePayload(content, for: record) }
+                        .accessibilityIdentifier("share-\(content.rawValue)")
+                }
+                Button("Cancel", role: .cancel) { }
             }
+            .sheet(item: $sharing) { ConversationShareSheet(payload: $0).presentationDetents([.medium, .large]) }
             .scrollContentBackground(.hidden).background(MobileStyle.canvas)
             .onAppear {
                 session.reloadHistory()
@@ -198,12 +204,4 @@ struct MobileHistoryView: View {
         pendingDeletion = record
         showDeletion = true
     }
-}
-
-private struct ConversationShareSheet: UIViewControllerRepresentable {
-    let text: String
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [text], applicationActivities: nil)
-    }
-    func updateUIViewController(_ controller: UIActivityViewController, context: Context) { }
 }

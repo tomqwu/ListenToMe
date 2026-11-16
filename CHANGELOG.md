@@ -11,6 +11,14 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
+## iOS (unreleased, on `main`)
+
+- **Share** now asks what to send: **Quick summary**, **Full summary**, **Whole conversation** or
+  **Audio**, each offered only when the conversation has it. A summary is shared with just its title
+  and date, without the transcript. The same menu appears in **More**, in a History row's touch-and-hold
+  menu, and after swiping a History row right. Share, Export as and Share audio now open the share sheet
+  reliably from menus; **Share Markdown** is folded into **Export as → Markdown**.
+
 ## Repository tooling (unreleased)
 
 - Recognize the iPad mini's existing compact-height Duo layout before the landscape History

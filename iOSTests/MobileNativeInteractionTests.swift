@@ -90,6 +90,7 @@ final class MobileNativeInteractionTests: XCTestCase {
         record.tap()
         app.buttons["More"].tap()
         app.buttons["Share"].tap()
+        app.buttons["Whole conversation"].firstMatch.tap()
         let copy = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Copy")).firstMatch
         XCTAssertTrue(copy.waitForExistence(timeout: 10))
         copy.tap()
@@ -141,6 +142,7 @@ final class MobileNativeInteractionTests: XCTestCase {
         XCTAssertTrue(app.buttons["Share"].isHittable)
         capture(app, "History swipe right to share")
         app.buttons["Share"].tap()
+        app.buttons["Whole conversation"].firstMatch.tap()
         let copy = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Copy")).firstMatch
         XCTAssertTrue(copy.waitForExistence(timeout: 10), app.debugDescription)
         capture(app, "Native conversation share sheet")
