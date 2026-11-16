@@ -158,16 +158,18 @@ final class MobileAppTests: XCTestCase {
 
     func testShareExtensionImportsNotesAndPreservesSource() {
         let app = XCUIApplication()
+        app.launchArguments = ["--automatic-summary-fixture", "-autoQuickSummary", "YES", "-mobileAIProvider", "apple"]
         app.launchPastReleaseNotes()
-        app.buttons["New"].tap()
-        app.buttons["Notes"].tap()
-        let marker = "Shared note " + UUID().uuidString
-        app.textViews["Conversation notes"].tap()
-        app.textViews["Conversation notes"].typeText(marker)
-        app.buttons["Done"].tap()
+        app.buttons["Start listening"].tap()
+        let quick = app.staticTexts["output-quick"]
+        let summarized = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Thursday"),
+                                                   object: quick)
+        XCTAssertEqual(XCTWaiter.wait(for: [summarized], timeout: 20), .completed, app.debugDescription)
+        app.buttons["Stop listening"].tap()
+        XCTAssertTrue(app.buttons["Start listening"].waitForExistence(timeout: 5))
         app.buttons["More"].tap()
         app.buttons["Share"].tap()
-        app.buttons["Whole conversation"].firstMatch.tap()
+        app.buttons["share-quickSummary"].tap()
         // Use the Apps list consistently. The original carousel remains in the accessibility
         // hierarchy underneath it, so selecting its first matching cell can tap the wrong app.
         let more = app.cells["More"].firstMatch
@@ -190,13 +192,15 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Import"].tap()
         XCTAssertTrue(app.buttons["Saved"].waitForExistence(timeout: 10))
         app.buttons["finishSharedImport"].tap()
-        app.terminate(); app.launchPastReleaseNotes()
+        app.terminate()
+        app.launchArguments = []   // the real app imports from the shared inbox, not the fixture
+        app.launchPastReleaseNotes()
         XCTAssertEqual(app.textFields["conversationTitle"].value as? String, "Imported notes")
         app.buttons["Notes"].tap()
-        XCTAssertTrue((app.textViews["Conversation notes"].value as? String ?? "").contains(marker))
+        let notes = app.textViews["Conversation notes"].value as? String ?? ""
+        XCTAssertTrue(notes.contains("Live summary check") && notes.contains("Review on Thursday."), notes)
+        XCTAssertFalse(notes.contains("Review the prototype on Thursday."), "the transcript is never shared: \(notes)")
         app.buttons["Done"].tap()
-        app.buttons["History"].tap()
-        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", marker)).count, 2)
     }
 
 
