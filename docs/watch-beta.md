@@ -9,7 +9,13 @@ deferred physical acceptance; installation, recording, paired transfer, wrist-do
 checks remain unverified. No new public release is claimed.
 [Review receipt](releases/ios-1.20.4-build44-review.json).
 
-## Current companion — TestFlight 1.20.4 (44)
+## Current companion — 1.20.5 (45)
+
+TestFlight **1.20.5 (45)** (accepted November 16, 2026, from `30fe9ca`) embeds the same Watch
+companion, unchanged since 1.20.4. Its exported Watch bundle passed signature, profile and embedding
+checks. [Receipt](releases/ios-1.20.5-build45.json). Physical Watch acceptance remains pending.
+
+## Earlier companion — TestFlight 1.20.4 (44)
 
 Apple accepted **1.20.4 (44)** from merged source `08810e8` on October 31, **14:08:38 UTC**.
 Readback confirms **VALID / IN_BETA_TESTING**, en-US metadata and unchanged existing Dev group
