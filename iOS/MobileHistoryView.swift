@@ -6,7 +6,6 @@ struct MobileHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var pendingDeletion: SessionRecord?
     @State private var showDeletion = false
-    @State private var choosingShare: SessionRecord?
     @State private var sharing: ConversationSharePayload?
     @State private var query = ""
     @State private var pendingWatchDeletion: WatchInboxRow?
@@ -58,8 +57,11 @@ struct MobileHistoryView: View {
                                 Button("Delete", systemImage: "trash") { confirmDeletion(record) }.tint(.red)
                             }
                             .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                Button("Share", systemImage: "square.and.arrow.up") { choosingShare = record }
-                                    .tint(MobileStyle.accent)
+                                // Share sends the summary; the transcript is never shared.
+                                if let summary = session.defaultSharePayload(for: record) {
+                                    Button("Share", systemImage: "square.and.arrow.up") { sharing = summary }
+                                        .tint(MobileStyle.accent)
+                                }
                             }
                             .contextMenu {
                                 ConversationShareMenu(contents: session.shareContents(for: record)) { content in
@@ -71,11 +73,11 @@ struct MobileHistoryView: View {
                                 }
                                 Button("Delete", systemImage: "trash", role: .destructive) { confirmDeletion(record) }
                             }
-                            .accessibilityAction(named: "Share") { choosingShare = record }
+                            .accessibilityAction(named: "Share") { sharing = session.defaultSharePayload(for: record) }
                             .accessibilityAction(named: "Delete") { confirmDeletion(record) }
                     }
                 } footer: {
-                    if !session.history.isEmpty { Text("Swipe right to share, left to delete. Touch and hold for more actions.") }
+                    if !session.history.isEmpty { Text("Swipe right to share the summary, left to delete. Touch and hold for more actions.") }
                 }
                 // Hidden while searching, so it never reads as "delete these results".
                 if !session.history.isEmpty, query.isEmpty {
@@ -101,15 +103,6 @@ struct MobileHistoryView: View {
                 Button("Cancel", role: .cancel) { pendingWatchDeletion = nil }
             } message: { _ in
                 Text("Text already transcribed stays in History.")
-            }
-            .confirmationDialog("Share", isPresented: Binding(get: { choosingShare != nil },
-                                                              set: { if !$0 { choosingShare = nil } }),
-                                titleVisibility: .visible, presenting: choosingShare) { record in
-                ForEach(session.shareContents(for: record)) { content in
-                    Button(content.title) { sharing = session.sharePayload(content, for: record) }
-                        .accessibilityIdentifier("share-\(content.rawValue)")
-                }
-                Button("Cancel", role: .cancel) { }
             }
             .sheet(item: $sharing) { ConversationShareSheet(payload: $0).presentationDetents([.medium, .large]) }
             .scrollContentBackground(.hidden).background(MobileStyle.canvas)

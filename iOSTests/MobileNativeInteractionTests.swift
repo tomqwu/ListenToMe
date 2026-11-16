@@ -87,10 +87,20 @@ final class MobileNativeInteractionTests: XCTestCase {
         let record = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@",
                                                      "history-record-", marker)).firstMatch
         XCTAssertTrue(record.waitForExistence(timeout: 5))
-        record.tap()
+        app.buttons["Done"].tap()
+    }
+
+    /// Share sends the summary as readable text, never the transcript or notes.
+    func testShareCopiesOnlyTheSummaryAsReadableText() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--design-review-fixture", "-autoQuickSummary", "NO", "-mobileAIProvider", "apple"]
+        app.launchPastReleaseNotes()
         app.buttons["More"].tap()
         app.buttons["Share"].tap()
-        app.buttons["Whole conversation"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["share-quickSummary"].waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertFalse(app.buttons["Whole conversation"].exists, "the transcript is not a Share choice")
+        capture(app, "Share offers the summaries")
+        app.buttons["share-fullSummary"].tap()
         let copy = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Copy")).firstMatch
         XCTAssertTrue(copy.waitForExistence(timeout: 10))
         copy.tap()
@@ -98,11 +108,12 @@ final class MobileNativeInteractionTests: XCTestCase {
         app.buttons["Notes"].tap()
         app.buttons["Paste"].tap()
         let text = app.textViews["Conversation notes"].value as? String ?? ""
-        XCTAssertTrue(text.contains(marker))
-        XCTAssertTrue(text.contains("Alex owns the Friday review."))
-        XCTAssertFalse(text.contains("## Decision"))
-        XCTAssertFalse(text.contains("**Alex**"))
-        capture(app, "Share Copy contains readable text without Markdown markers")
+        XCTAssertTrue(text.contains("Product planning"), text)
+        XCTAssertTrue(text.contains("Alex will prepare the onboarding flow."), text)
+        XCTAssertFalse(text.contains("## Decisions"), text)
+        XCTAssertFalse(text.contains("Let's keep the first release"), "no transcript: \(text)")
+        XCTAssertFalse(text.contains("Thursday prototype review"), "no notes: \(text)")
+        capture(app, "Share Copy contains only the readable summary")
         app.buttons["Done"].tap()
     }
 
@@ -142,7 +153,6 @@ final class MobileNativeInteractionTests: XCTestCase {
         XCTAssertTrue(app.buttons["Share"].isHittable)
         capture(app, "History swipe right to share")
         app.buttons["Share"].tap()
-        app.buttons["Whole conversation"].firstMatch.tap()
         let copy = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Copy")).firstMatch
         XCTAssertTrue(copy.waitForExistence(timeout: 10), app.debugDescription)
         capture(app, "Native conversation share sheet")

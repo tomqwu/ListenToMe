@@ -1252,8 +1252,8 @@ and date (`Standup 2026-10-23 1435.srt`, made filesystem-safe; a default title b
 `Conversation`). Every iPhone and Apple Watch line carries the recognizer's audio range, cumulative
 across resumed recordings, so Markdown and plain text show `[mm:ss]` and the subtitle formats are
 offered; a conversation without timed lines (imported notes only) offers neither. **Share** (More, the
-History swipe and touch-and-hold menu) sends readable text: Quick summary or Full summary alone,
-or the Whole conversation; or the saved Audio files. Its choices come from Core `ConversationShare`. Cue rules, timestamp sources per engine and the versioned
+History swipe and touch-and-hold menu) sends a readable Full summary or Quick summary alone, or the
+saved Audio files; never the transcript or notes. A plain Share (the swipe) sends the full summary, else the Quick summary. Its choices come from Core `ConversationShare`. Cue rules, timestamp sources per engine and the versioned
 JSON schema are in [export-formats.md](export-formats.md); the formatting lives in Core
 (`SessionExporter`, `TranscriptTimestamp`) with golden-file tests.
 

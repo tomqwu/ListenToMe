@@ -108,7 +108,7 @@ final class MobileLiveCloudTests: XCTestCase {
     private func shareAndDelete(_ app: XCUIApplication, outputs: [String: String], marker: String) {
         app.buttons["More"].tap()
         app.buttons["Share"].tap()
-        app.buttons["Whole conversation"].firstMatch.tap()
+        app.buttons["share-fullSummary"].firstMatch.tap()
         let copy = app.cells["Copy"]
         guard copy.waitForExistence(timeout: 10) else { XCTFail("Share sheet did not offer Copy"); return }
         copy.tap()
@@ -116,11 +116,9 @@ final class MobileLiveCloudTests: XCTestCase {
         app.buttons["Notes"].tap()
         app.buttons["Paste"].tap()
         let exported = app.textViews["Conversation notes"].value as? String ?? ""
-        XCTAssertTrue(exported.contains(marker))
-        // Share sends readable text: each section keeps its plain heading.
-        for heading in ["Summary", "Quick summary"] {
-            XCTAssertTrue(exported.contains(heading), "Missing exported section: \(heading)")
-        }
+        XCTAssertTrue(exported.contains(marker), "the title names the shared summary")
+        XCTAssertTrue(exported.contains("Full summary"))
+        XCTAssertFalse(exported.contains("Decision: review the mobile release"), "notes and transcript are never shared")
         app.buttons["Done"].tap()
         app.buttons["History"].tap()
         // Both this run's source and pasted copy carry the unique marker.

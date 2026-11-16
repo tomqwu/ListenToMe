@@ -714,12 +714,13 @@ iPhone (simulator is enough):
    JSON with the conversation's language. An imported-notes conversation offers no subtitles.
 3. An Apple Watch conversation's subtitles start near 00:00:00 and follow the watch recording (watch
    builds only: the watch app is not embedded yet, #181).
-4. **Share what you choose.** With a Quick summary, a Full summary and saved audio, **More → Share**
-   lists Quick summary, Full summary, Whole conversation and Audio. **Copy** Quick summary and paste it
-   into Notes: title, date and only that summary, with no Markdown markers or transcript. Full summary
-   does the same with the full summary; Whole conversation includes the transcript; Audio offers the
-   `.m4a` files. A new conversation with only a transcript offers Whole conversation alone. In History,
-   swipe a row right and touch and hold it: both offer the same choices, and each opens the share sheet.
+4. **Share sends only the summary.** With a Quick summary, a Full summary and saved audio, **More →
+   Share** lists Full summary, Quick summary and Audio, and nothing that contains the transcript.
+   **Copy** Full summary and paste it into Notes: title, date and only that summary, with no Markdown
+   markers, notes or transcript. Quick summary does the same; Audio offers the `.m4a` files. A
+   conversation with only a transcript has nothing to share. In History, swipe a row right and tap Share:
+   the share sheet opens with the full summary at once. Touch and hold the row: Share offers the same
+   three choices.
 
 ## Automatic conversation titles (#221)
 

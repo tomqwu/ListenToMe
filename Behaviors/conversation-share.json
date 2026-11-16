@@ -1,41 +1,53 @@
 {
-  "feature": "Share a conversation's summaries, words or audio",
+  "feature": "Share a conversation's summary or audio, never its transcript",
   "scenarios": [
     {
       "id": "CONVSHARE-001",
-      "name": "Offer only the parts a conversation has",
-      "given": "a conversation may have a Quick summary, a full summary, transcript or notes, and saved audio",
+      "name": "Offer only the summaries and audio a conversation has",
+      "given": "a conversation may have a full summary, a Quick summary, transcript or notes, and saved audio",
       "when": "the user opens Share for it",
-      "then": "Quick summary, Full summary, Whole conversation and Audio are offered in that order, each only when it has something to send, and blank summaries are not offered",
+      "then": "Full summary, Quick summary and Audio are offered in that order, each only when it has something to send; the transcript and notes are never offered, and blank summaries are not offered",
       "covers": ["Sources/ListenToMeCore/ConversationShare.swift"],
       "bindings": [
-        {"suite": "core", "file": "Tests/ListenToMeCoreTests/ConversationShareTests.swift", "test": "ConversationShareTests/testOffersOnlyWhatTheConversationHas"},
+        {"suite": "core", "file": "Tests/ListenToMeCoreTests/ConversationShareTests.swift", "test": "ConversationShareTests/testOffersOnlyTheSummariesAndAudioTheConversationHas"},
         {"suite": "core", "file": "Tests/ListenToMeCoreTests/ConversationShareTests.swift", "test": "ConversationShareTests/testTitles"}
       ]
     },
     {
       "id": "CONVSHARE-002",
-      "name": "A summary is shared without the transcript",
-      "given": "a conversation has a Quick summary, a full summary, notes and transcript",
-      "when": "the user shares Quick summary or Full summary",
-      "then": "the share sheet receives readable text with only the title, recording date and the chosen summary; Whole conversation still sends everything and Audio sends the saved files instead of text",
+      "name": "A summary is shared without the transcript or notes",
+      "given": "a conversation has a full summary, a Quick summary, notes and transcript",
+      "when": "the user shares Full summary or Quick summary",
+      "then": "the share sheet receives readable text with only the title, recording date and the chosen summary, and Audio sends the saved files instead of text",
       "covers": ["Sources/ListenToMeCore/ConversationShare.swift", "iOS/MobileSessionExport.swift"],
       "bindings": [
-        {"suite": "core", "file": "Tests/ListenToMeCoreTests/ConversationShareTests.swift", "test": "ConversationShareTests/testSummariesShareWithoutTheTranscript"},
-        {"suite": "core", "file": "Tests/ListenToMeCoreTests/ConversationShareTests.swift", "test": "ConversationShareTests/testConversationSharesEverythingAndAudioAndBlanksShareNoText"},
-        {"suite": "ios-unit", "file": "iOSUnitTests/MobileMarkdownTests.swift", "test": "MobileMarkdownTests/testShareChoicesSendOnlyTheChosenPartReadably"}
+        {"suite": "core", "file": "Tests/ListenToMeCoreTests/ConversationShareTests.swift", "test": "ConversationShareTests/testSummariesShareWithoutTheTranscriptOrNotes"},
+        {"suite": "core", "file": "Tests/ListenToMeCoreTests/ConversationShareTests.swift", "test": "ConversationShareTests/testAudioAndBlankSummariesShareNoText"},
+        {"suite": "ios-unit", "file": "iOSUnitTests/MobileMarkdownTests.swift", "test": "MobileMarkdownTests/testShareSendsOnlyTheChosenSummaryReadablyAndNeverTheTranscript"}
       ]
     },
     {
       "id": "CONVSHARE-003",
-      "name": "Every Share entry point opens the share sheet",
-      "given": "a saved conversation is open, or listed in History",
-      "when": "the user chooses More → Share → Whole conversation, or swipes a History row and chooses Whole conversation, or touches and holds the row",
-      "then": "the system share sheet opens with the chosen content and Copy pastes readable text, and the touch-and-hold menu offers Share",
+      "name": "Every Share entry point opens the share sheet with a summary",
+      "given": "a saved conversation with summaries is open, or listed in History",
+      "when": "the user chooses More → Share → Full summary, or swipes a History row and taps Share, or touches and holds the row",
+      "then": "the system share sheet opens with the summary and Copy pastes readable summary text with no transcript or notes; the touch-and-hold menu offers Share",
       "covers": ["iOS/MobileMeetingView.swift", "iOS/MobileHistoryView.swift", "iOS/MobileSessionExport.swift"],
       "bindings": [
-        {"suite": "ios-ui", "file": "iOSTests/MobileNativeInteractionTests.swift", "test": "MobileNativeInteractionTests/testBottomSaveConfirmsPersistenceAndShareCopiesReadableText"},
+        {"suite": "ios-ui", "file": "iOSTests/MobileNativeInteractionTests.swift", "test": "MobileNativeInteractionTests/testShareCopiesOnlyTheSummaryAsReadableText"},
         {"suite": "ios-ui", "file": "iOSTests/MobileNativeInteractionTests.swift", "test": "MobileNativeInteractionTests/testHistorySwipeShareAndDeleteConfirmation"}
+      ]
+    },
+    {
+      "id": "CONVSHARE-004",
+      "name": "A plain Share sends the summary",
+      "given": "a conversation has a full summary, a Quick summary or neither",
+      "when": "the user shares it without choosing (History swipe Share or the VoiceOver Share action)",
+      "then": "the full summary is sent, else the Quick summary; with no summary there is no plain Share and nothing is sent",
+      "covers": ["Sources/ListenToMeCore/ConversationShare.swift", "iOS/MobileHistoryView.swift", "iOS/MobileSessionExport.swift"],
+      "bindings": [
+        {"suite": "core", "file": "Tests/ListenToMeCoreTests/ConversationShareTests.swift", "test": "ConversationShareTests/testDefaultShareIsTheSummaryNeverTheTranscript"},
+        {"suite": "ios-unit", "file": "iOSUnitTests/MobileMarkdownTests.swift", "test": "MobileMarkdownTests/testShareSendsOnlyTheChosenSummaryReadablyAndNeverTheTranscript"}
       ]
     }
   ]

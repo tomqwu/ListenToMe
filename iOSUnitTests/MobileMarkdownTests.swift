@@ -39,7 +39,7 @@ final class MobileMarkdownTests: XCTestCase {
         XCTAssertTrue(session.markdown.contains("**Alex**"), "Markdown export remains available")
     }
 
-    func testShareChoicesSendOnlyTheChosenPartReadably() throws {
+    func testShareSendsOnlyTheChosenSummaryReadablyAndNeverTheTranscript() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let session = MobileSession(storageDirectory: root)
@@ -47,8 +47,9 @@ final class MobileMarkdownTests: XCTestCase {
         session.notes = "Private aside"
         session.quickSummary = "- **Alex** confirms Friday."
         session.summary = "### Decisions\n- Ship the *beta*."
+        session.segments = [TranscriptSegment(source: .you, text: "Live words nobody shares", isFinal: true, start: 0, end: 2)]
         let record = session.currentRecord
-        XCTAssertEqual(session.shareContents(for: record), [.quickSummary, .fullSummary, .conversation],
+        XCTAssertEqual(session.shareContents(for: record), [.fullSummary, .quickSummary],
                        "Audio is offered only when this conversation's audio is saved")
         func text(_ content: ConversationShareContent) throws -> String {
             try XCTUnwrap(session.sharePayload(content, for: record)?.items.first as? String)
@@ -59,8 +60,9 @@ final class MobileMarkdownTests: XCTestCase {
         let full = try text(.fullSummary)
         XCTAssertTrue(full.contains("Ship the beta."), full)
         XCTAssertFalse(full.contains("###") || full.contains("confirms Friday") || full.contains("Private aside"), full)
-        let whole = try text(.conversation)
-        XCTAssertTrue(whole.contains("Private aside") && whole.contains("Ship the beta.") && whole.contains("Alex confirms"))
+        XCTAssertEqual(try XCTUnwrap(session.defaultSharePayload(for: record)?.items.first as? String), full,
+                       "a plain Share sends the full summary")
+        XCTAssertFalse(quick.contains("Live words") || full.contains("Live words"), "the transcript is never shared")
         XCTAssertNil(session.sharePayload(.audio, for: record))
     }
 

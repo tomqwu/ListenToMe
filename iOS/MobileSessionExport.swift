@@ -135,9 +135,9 @@ struct ConversationExportLinks: View {
     }
 }
 
-// MARK: Share (quick summary, full summary, whole conversation, audio)
+// MARK: Share (full summary, quick summary, audio; never the transcript)
 
-/// What the share sheet is about to send: readable text or saved audio/export files.
+/// What the share sheet is about to send: a readable summary, or saved audio/export files.
 struct ConversationSharePayload: Identifiable {
     let id = UUID()
     let items: [Any]
@@ -147,6 +147,11 @@ extension MobileSession {
     /// The Share choices `record` has something for; Audio only when its audio is still saved.
     func shareContents(for record: SessionRecord) -> [ConversationShareContent] {
         ConversationShare.contents(for: record, hasAudio: !savedAudio.fileURLs(for: record.id).isEmpty)
+    }
+
+    /// What a plain Share sends: the full summary, else the Quick summary; nil when there is none.
+    func defaultSharePayload(for record: SessionRecord) -> ConversationSharePayload? {
+        ConversationShare.defaultContent(for: record).flatMap { sharePayload($0, for: record) }
     }
 
     /// The share sheet's items for one choice, or nil when that choice has nothing to send.
@@ -160,8 +165,8 @@ extension MobileSession {
     }
 }
 
-/// The Share menu: Quick summary, Full summary, Whole conversation and Audio, each shown only when the
-/// conversation has it. Choosing one sets a payload the caller presents with `ConversationShareSheet`.
+/// The Share menu: Full summary, Quick summary and Audio, each shown only when the conversation has it.
+/// The transcript and notes are never shared; Export as is the explicit way to export them. Choosing one sets a payload the caller presents with `ConversationShareSheet`.
 struct ConversationShareMenu: View {
     let contents: [ConversationShareContent]
     let choose: (ConversationShareContent) -> Void
@@ -179,9 +184,8 @@ struct ConversationShareMenu: View {
 
     static func symbol(_ content: ConversationShareContent) -> String {
         switch content {
-        case .quickSummary: return MobileStyle.symbol(for: .quick)
         case .fullSummary: return MobileStyle.symbol(for: .summary)
-        case .conversation: return "text.bubble"
+        case .quickSummary: return MobileStyle.symbol(for: .quick)
         case .audio: return "waveform"
         }
     }

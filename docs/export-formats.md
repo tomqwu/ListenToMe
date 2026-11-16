@@ -19,8 +19,9 @@ Where to find them:
 - **iPhone and iPad** (since iOS 1.15.0 (32)) — **More → Export as** for the open conversation, and
   **Export as** in a History row's context menu (touch and hold). Each item opens the share sheet
   with a file, so **Save to Files**, Mail or AirDrop receive a real `.srt`/`.json`/… file.
-  **Share** next to it sends readable text instead: **Quick summary** or **Full summary** alone (title,
-  date and that summary, no transcript), the **Whole conversation**, or the saved **Audio** files.
+  **Share** next to it sends only a readable **Full summary** or **Quick summary** (title, date and that
+  summary), or the saved **Audio** files. It never shares the transcript or notes; Export as is the
+  explicit way to export those.
 
 ## File names
 
