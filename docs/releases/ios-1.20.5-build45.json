@@ -1,0 +1,28 @@
+{
+ "version": "1.20.5",
+ "build": "45",
+ "sourceCommit": "30fe9ca3c86c3c32db3c041f071390369a0f60f7",
+ "sourceTree": "61331068259bac496381a1782cab5b548e1c282e",
+ "archivedFromBranchHead": "1dcda2592ab58ab21bbbd4ecb3cf2c9545c704ce",
+ "uploadAcceptedAt": "2026-11-16T19:38:31.854850+00:00",
+ "authentication": "app_store_connect_api_key",
+ "signing": "manual (existing local App Store profiles; API key lacks cloud-signing permission)",
+ "exportOptionsSHA256": "221b59b95b7c6e07653a1f89432e8b53b2fde5aef8156639ebf768bd392b59f8",
+ "localExportIPASHA256": "158107b99ac1e9fa7d040adfceaafb608938f1f48f1abbece6d0e5774351f677",
+ "watchEmbedded": true,
+ "bundlesVerified": "phone/Share/Watch 1.20.5 (45), codesign strict OK, App Store profiles expire 2027-06-25, get-task-allow false, App Group on phone/Share",
+ "appleBuildId": "54bb4505-5777-41e1-aadb-2947d84ebd0f",
+ "processingState": "VALID",
+ "internalBuildState": "IN_BETA_TESTING",
+ "devGroupHasBuild": true,
+ "devTesterStates": [
+  "INSTALLED",
+  "INSTALLED"
+ ],
+ "whatToTestReadbackMatches": true,
+ "locale": "en-US",
+ "tag": "ios-v1.20.5-build45",
+ "githubPrerelease": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.5-build45",
+ "localValidation": "full make ios-test on the candidate: one failure (large-text release-history scroll safeguard timed out while progressing); safeguard raised, both release-notes UI tests then passed; core 1299 tests; BDD 266 scenarios",
+ "physicalDeviceAcceptance": "deferred by the maintainer; not performed"
+}

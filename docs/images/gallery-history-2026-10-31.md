@@ -9,6 +9,20 @@ The local Mac saved-audio ordering follow-up still needs a source-matched instal
 capture before its gallery refresh is complete. Its native component images are QA evidence;
 the existing gallery is not a preview of that fix. See the [scoped evidence and pending acceptance](../../docs/dual-channel-capture.md#local-saved-audio-ordering-follow-up--october-30-2026).
 
+### iPhone, iPad and Apple Watch · TestFlight 1.20.4 (44)
+
+Superseded on November 16, 2026 by the 1.20.5 (45) gallery. Captured on `ca7ab57`; published build
+`08810e8`. [Capture manifest](ios/release-1.20.4/manifest.json) ·
+[Publication receipt](../releases/ios-1.20.4-build44.json).
+
+<p align="center"><a href="ios/release-1.20.4/01-iphone-live.png"><img src="ios/release-1.20.4/01-iphone-live.png" width="200" alt="Build 44 iPhone Pro Max portrait Live and Quick Summary."></a>
+<a href="ios/release-1.20.4/02-iphone-prompt.png"><img src="ios/release-1.20.4/02-iphone-prompt.png" width="200" alt="Build 44 iPhone notes and prompt controls."></a></p>
+<p align="center"><a href="ios/release-1.20.4/03-iphone-duo.png"><img src="ios/release-1.20.4/03-iphone-duo.png" width="640" alt="Build 44 iPhone landscape Duo."></a></p>
+<p align="center"><a href="ios/release-1.20.4/04-ipad-wide.png"><img src="ios/release-1.20.4/04-ipad-wide.png" width="640" alt="Build 44 iPad Pro wide workspace with translation."></a></p>
+<p align="center"><a href="ios/release-1.20.4/05-ipad-history.png"><img src="ios/release-1.20.4/05-ipad-history.png" width="640" alt="Build 44 iPad mini landscape History."></a></p>
+<p align="center"><a href="ios/release-1.20.4/06-watch-ready.png"><img src="ios/release-1.20.4/06-watch-ready.png" width="160" alt="Build 44 Watch ready screen."></a>
+<a href="ios/release-1.20.4/07-watch-recording.png"><img src="ios/release-1.20.4/07-watch-recording.png" width="160" alt="Build 44 Watch recording screen."></a></p>
+
 ### Unreleased workspace refinement
 
 These native previews show the **unreleased** reading-space and action-label improvements; they

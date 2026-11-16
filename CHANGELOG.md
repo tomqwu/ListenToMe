@@ -11,7 +11,15 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
-## iOS 1.20.5 (45) — 2026-11-16
+## iOS 1.20.5 (45) — 2026-11-16 (TestFlight; App Store review)
+
+Apple accepted the upload at **2026-11-16T19:38Z** from `30fe9ca`. Build 45 is **VALID /
+IN_BETA_TESTING** with the internal Dev group, and its en-US What to Test was read back. Version 1.20.5
+was submitted for App Store review at 19:44Z, set to release on approval, with 46 fresh screenshots
+processed and download-verified. Physical-device acceptance is deferred at the maintainer's direction.
+[TestFlight receipt](docs/releases/ios-1.20.5-build45.json) ·
+[Review receipt](docs/releases/ios-1.20.5-build45-review.json) ·
+[GitHub pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.5-build45).
 
 - **Share sends the summary, never the transcript.** **More → Share** and a History row's
   touch-and-hold **Share** offer **Full summary**, **Quick summary** and **Audio**, each only when the

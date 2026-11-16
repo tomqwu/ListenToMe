@@ -32,7 +32,9 @@ macOS-only, and there is no Mac↔iOS sync. See
 [parity with macOS](docs/IOS.md#parity-with-macos) and
 [the version policy](docs/IOS.md#version-policy).
 
-**TestFlight 1.20.4 (44)** adds History **Refresh search**, cancellation when a History question changes,
+**1.20.5 (45)**, on TestFlight and in App Store review, makes **Share** send only a summary (or saved
+audio), never the transcript, and keeps recording when you switch to another app. **1.20.4 (44)**, now
+on the App Store, added History **Refresh search**, cancellation when a History question changes,
 clearer workspace controls and preservation of duplicate Watch deliveries. It retains translation,
 saved-audio and speaker-rename improvements, plus continued user-started microphone recording through screen lock,
 while optional AI waits for active use. Stop and genuine audio interruptions still end capture;
@@ -92,35 +94,35 @@ make ios-test
 
 ## Screenshots
 
-### iPhone, iPad and Apple Watch · TestFlight 1.20.4 (44)
+### iPhone, iPad and Apple Watch · 1.20.5 (45), TestFlight and in App Store review
 
-These native simulator previews use synthetic demonstration content captured on `ca7ab57`.
-The published build uses `08810e8`, whose changes from that capture source are documentation and
-gallery files only. Tap any preview for its original resolution. The original
-[capture manifest](docs/images/ios/release-1.20.4/manifest.json) preserves its pre-upload status;
-the later [publication receipt](docs/releases/ios-1.20.4-build44.json) records accepted TestFlight delivery.
+These native simulator previews use synthetic demonstration content captured on `1dcda25`, whose
+source tree is identical to the released build's `30fe9ca`. Tap any preview for its original
+resolution. [Capture manifest](docs/images/ios/release-1.20.5/manifest.json) ·
+[TestFlight receipt](docs/releases/ios-1.20.5-build45.json) ·
+[App Store review receipt](docs/releases/ios-1.20.5-build45-review.json).
 
 **iPhone · live reading and conversation instructions**
 
-<p align="center"><a href="docs/images/ios/release-1.20.4/01-iphone-live.png"><img src="docs/images/ios/release-1.20.4/01-iphone-live.png" width="240" alt="Build 44 iPhone Pro Max portrait showing both complete synthetic transcript lines and the Quick Summary answer."></a>
-<a href="docs/images/ios/release-1.20.4/02-iphone-prompt.png"><img src="docs/images/ios/release-1.20.4/02-iphone-prompt.png" width="240" alt="Build 44 iPhone conversation notes and prompt controls using synthetic demonstration content."></a></p>
+<p align="center"><a href="docs/images/ios/release-1.20.5/01-iphone-live.png"><img src="docs/images/ios/release-1.20.5/01-iphone-live.png" width="240" alt="Build 45 iPhone Pro Max portrait showing both complete synthetic transcript lines and the Quick Summary answer."></a>
+<a href="docs/images/ios/release-1.20.5/02-iphone-prompt.png"><img src="docs/images/ios/release-1.20.5/02-iphone-prompt.png" width="240" alt="Build 45 iPhone conversation notes and prompt controls using synthetic demonstration content."></a></p>
 
 **Duo · transcript and Quick Summary together**
 
-<p align="center"><a href="docs/images/ios/release-1.20.4/03-iphone-duo.png"><img src="docs/images/ios/release-1.20.4/03-iphone-duo.png" width="760" alt="Build 44 iPhone Pro landscape Duo with complete synthetic transcript lines and Quick Summary in separate reading panes."></a></p>
+<p align="center"><a href="docs/images/ios/release-1.20.5/03-iphone-duo.png"><img src="docs/images/ios/release-1.20.5/03-iphone-duo.png" width="760" alt="Build 45 iPhone Pro landscape Duo with complete synthetic transcript lines and Quick Summary in separate reading panes."></a></p>
 
 **iPad · wide reading and saved conversations**
 
-<p align="center"><a href="docs/images/ios/release-1.20.4/04-ipad-wide.png"><img src="docs/images/ios/release-1.20.4/04-ipad-wide.png" width="760" alt="Build 44 iPad Pro wide workspace with the original transcript, French translation and summaries."></a></p>
+<p align="center"><a href="docs/images/ios/release-1.20.5/04-ipad-wide.png"><img src="docs/images/ios/release-1.20.5/04-ipad-wide.png" width="760" alt="Build 45 iPad Pro wide workspace with the original transcript, French translation and summaries."></a></p>
 
-<p align="center"><a href="docs/images/ios/release-1.20.4/05-ipad-history.png"><img src="docs/images/ios/release-1.20.4/05-ipad-history.png" width="760" alt="Build 44 iPad mini landscape History with Refresh search and saved-conversation controls."></a></p>
+<p align="center"><a href="docs/images/ios/release-1.20.5/05-ipad-history.png"><img src="docs/images/ios/release-1.20.5/05-ipad-history.png" width="760" alt="Build 45 iPad mini landscape History with Refresh search, a saved conversation and the swipe-to-share-the-summary hint."></a></p>
 
 **Watch · recording controls**
 
-<p align="center"><a href="docs/images/ios/release-1.20.4/06-watch-ready.png"><img src="docs/images/ios/release-1.20.4/06-watch-ready.png" width="180" alt="Build 44 42 mm Watch ready screen distinguishing recording on Watch from the iPhone remote."></a>
-<a href="docs/images/ios/release-1.20.4/07-watch-recording.png"><img src="docs/images/ios/release-1.20.4/07-watch-recording.png" width="180" alt="Build 44 49 mm Watch simulator recording screen with an explicit Stop button."></a></p>
+<p align="center"><a href="docs/images/ios/release-1.20.5/06-watch-ready.png"><img src="docs/images/ios/release-1.20.5/06-watch-ready.png" width="180" alt="Build 45 42 mm Watch ready screen with Record on Watch and the iPhone remote."></a>
+<a href="docs/images/ios/release-1.20.5/07-watch-recording.png"><img src="docs/images/ios/release-1.20.5/07-watch-recording.png" width="180" alt="Build 45 49 mm Watch Ultra recording screen with an explicit Stop button."></a></p>
 
-[46 mm Watch preview](docs/images/ios/release-1.20.4/08-watch-restored.png).
+[46 mm Watch preview](docs/images/ios/release-1.20.5/08-watch-restored.png).
 These microphone-free Watch fixtures show layout; physical recording, wrist-down and paired transfer
 remain separate acceptance checks. The capture manifest retains all seven device profiles and QA-only
 states. Simulator translation fixtures do not establish language quality or update App Store images.
