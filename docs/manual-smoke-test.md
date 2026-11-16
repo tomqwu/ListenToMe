@@ -557,6 +557,13 @@ as separate checks.
    retained recording, and on must preserve the full accepted run. Repeat a headset/route change and
    an interruption separately; supported recovery or a truthful terminal error must not revive a
    recorder after explicit Stop.
+   **Switch to another app mid-recording (`CONTINUITY-011`).** While Listening, read known speech,
+   switch to an authenticator or another app that plays a sound, approve a sign-in or accept a
+   request there, keep speaking for 30 seconds, then return. ListenToMe must still show Listening
+   with the same elapsed start, and the speech read while away must be in the transcript. Then take
+   a phone call mid-recording: the call stops capture with a notice; end the call while still in the
+   Phone app or another app, return, and recording must resume in the same conversation with a
+   "resumed" notice. Record any on-screen stop message verbatim if recording ends instead.
 2. **No background start.** Background while idle, and separately while microphone/model preparation
    is pending. No microphone may start from either case. Returning active must not resume the cancelled
    preparation; Start requires another deliberate tap. Test denied permission/setup independently.

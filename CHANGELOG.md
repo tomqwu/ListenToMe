@@ -19,6 +19,12 @@ does not show it again, and a fresh install does not see it at all; see
   menu, and after swiping a History row right. Share, Export as and Share audio now open the share sheet
   reliably from menus; **Share Markdown** is folded into **Export as → Markdown**.
 
+- Keep recording when you switch to another app mid-meeting, such as approving a sign-in in an
+  authenticator or accepting a request in another app. Recording now shares audio with other apps,
+  so their sounds no longer interrupt it; Stop or a real interruption such as a phone call still ends
+  it. If an interruption ends while you are in another app, the recording resumes in the same
+  conversation when you return. (`CONTINUITY-011`)
+
 ## Repository tooling (unreleased)
 
 - Recognize the iPad mini's existing compact-height Duo layout before the landscape History
