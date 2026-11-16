@@ -66,7 +66,7 @@
       "name": "Identify the share-summaries and keep-recording beta and bundled changes accurately",
       "given": "a user updates to the Watch-enabled share-summaries and keep-recording beta using standard or the largest accessibility text",
       "when": "What\u2019s New appears or is reopened",
-      "then": "the app identifies version 1.20.5 build 45 with its Share summaries and keep recording notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
+      "then": "the app identifies version 1.20.6 build 46 with its Long Apple Watch recordings arrive notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
       "covers": [
         "project.yml",
         "iOS/MobileReleaseNotes.swift",

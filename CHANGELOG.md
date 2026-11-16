@@ -11,7 +11,7 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
-## iOS (unreleased)
+## iOS 1.20.6 (46) — 2026-11-16
 
 - **Long Apple Watch recordings now finish importing on iPhone.** An hours-long Watch recording
   used to be labelled for speakers across its whole length before any text was saved, and leaving

@@ -1,0 +1,7 @@
+1. Update from build 45: What's New shows 1.20.6 (46) and "Long Apple Watch recordings arrive" once. It reopens from More, and at the largest text size Continue and older entries are still reachable.
+2. With Identify speakers on, record at least an hour on Apple Watch with the wrist down, then Stop. Wait until the Watch no longer says a recording is waiting for iPhone.
+3. Open ListenToMe on iPhone. History shows the recording under Waiting from Apple Watch. Lock the iPhone partway through the import, then unlock and reopen ListenToMe. Text already imported stays, the part count keeps falling, and the import finishes.
+4. Open the finished conversation. Lines are in order with nothing repeated or missing around each 10-minute boundary, and each voice keeps one speaker number.
+5. Repeat a short Watch recording. It still arrives as one conversation.
+
+Privacy: Watch audio is transcribed only on iPhone. Physical-device results, production readiness and App Store listing media are separate from TestFlight eligibility.
