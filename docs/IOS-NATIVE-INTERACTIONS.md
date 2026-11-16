@@ -4,10 +4,12 @@ History uses a SwiftUI List with system swipe actions, a context menu, system co
 and the iOS activity sheet. The whole row opens its conversation. A chevron communicates navigation;
 a short footer makes the gestures discoverable. Persistent trash icons were removed from the rows.
 
-- Leading edge / swipe right: Share, tinted with the app accent.
+- Leading edge / swipe right: Share, tinted with the app accent. It asks what to send: Quick summary,
+  Full summary, Whole conversation or Audio, each only when the conversation has it.
 - Trailing edge / swipe left: Delete, red, followed by confirmation.
-- Touch and hold: Share, **Export as** (Markdown, plain text, SRT, WebVTT or JSON; #130), **Share audio**
-  when the conversation has saved audio (#55), and Delete.
+- Touch and hold: **Share** (the same choices; Audio when the conversation has saved audio, #55),
+  **Export as** (Markdown, plain text, SRT, WebVTT or JSON; #130), and Delete. Menu items set the
+  content first and then present the share sheet, so it opens after the menu closes.
 - VoiceOver: named Share and Delete actions on the row.
 - **Delete all conversations…** (#220) sits at the bottom of the list (hidden while a search is typed)
   and asks first, naming the count.

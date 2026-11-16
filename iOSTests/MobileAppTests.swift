@@ -167,6 +167,7 @@ final class MobileAppTests: XCTestCase {
         app.buttons["Done"].tap()
         app.buttons["More"].tap()
         app.buttons["Share"].tap()
+        app.buttons["Whole conversation"].firstMatch.tap()
         // Use the Apps list consistently. The original carousel remains in the accessibility
         // hierarchy underneath it, so selecting its first matching cell can tap the wrong app.
         let more = app.cells["More"].firstMatch

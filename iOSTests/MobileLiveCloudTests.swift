@@ -108,6 +108,7 @@ final class MobileLiveCloudTests: XCTestCase {
     private func shareAndDelete(_ app: XCUIApplication, outputs: [String: String], marker: String) {
         app.buttons["More"].tap()
         app.buttons["Share"].tap()
+        app.buttons["Whole conversation"].firstMatch.tap()
         let copy = app.cells["Copy"]
         guard copy.waitForExistence(timeout: 10) else { XCTFail("Share sheet did not offer Copy"); return }
         copy.tap()
@@ -116,8 +117,8 @@ final class MobileLiveCloudTests: XCTestCase {
         app.buttons["Paste"].tap()
         let exported = app.textViews["Conversation notes"].value as? String ?? ""
         XCTAssertTrue(exported.contains(marker))
-        // Displayed summaries are formatted; exported output intentionally retains Markdown.
-        for heading in ["## Listener", "## Quick"] {
+        // Share sends readable text: each section keeps its plain heading.
+        for heading in ["Summary", "Quick summary"] {
             XCTAssertTrue(exported.contains(heading), "Missing exported section: \(heading)")
         }
         app.buttons["Done"].tap()
