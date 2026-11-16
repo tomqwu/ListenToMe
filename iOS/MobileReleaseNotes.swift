@@ -48,6 +48,18 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.20.5", title: "Share summaries and keep recording", details: [
+            "Share sends a summary, never the transcript. Swipe a conversation in History and tap Share to " +
+                "send its summary at once, or choose Full summary, Quick summary or Audio from More → Share.",
+            "A shared summary includes only the conversation's title, date and that summary, as readable text.",
+            "Keep recording when you switch to another app, for example to approve a sign-in or accept a " +
+                "request. If a call or another interruption ends while you are away, recording resumes when " +
+                "you return.",
+            "Share, Export as and audio sharing open the share sheet reliably. Share Markdown is now " +
+                "Export as → Markdown.",
+            "Your transcript and notes are never shared. Recording still stops for phone calls and for apps " +
+                "that use the microphone."
+        ]),
         .init(version: "1.20.4", title: "Clearer History and recording controls", details: [
             "Refresh History search with the Apple models already on your device. Keep saved conversations " +
                 "and exact-word search available.",

@@ -24,8 +24,8 @@ Beta eligibility does not establish production readiness or authorize additional
 the maintainer’s **2026-10-28 (Toronto)** standing instruction authorizes review submission whenever
 an iOS or macOS App Store version is ready. Follow the [canonical production checklist](../../../AGENTS.md#official-app-store-review-and-public-release)
 without asking for renewed submission permission: preserve acceptance gates, en-US metadata, fresh
-all-device screenshot processing/readback and the existing release mode. Manual-release versions
-remain pending after approval unless separately instructed; OS authentication remains user-owned.
+all-device screenshot processing/readback. Approved versions are released directly (2026-11-16):
+use `AFTER_APPROVAL` and release any version left pending developer release; OS authentication remains user-owned.
 
 Read [the release runbook](../../../docs/IOS-RELEASING.md) for artifact validation, authentication,
 API status checks and metadata updates. Use this repository's current procedure over older notes

@@ -1,0 +1,15 @@
+{
+  "version": "1.20.4",
+  "build": "44",
+  "versionId": "1283d670-5337-4ca3-a3de-105097770162",
+  "stateBefore": "PENDING_DEVELOPER_RELEASE",
+  "releaseTypeBefore": "MANUAL",
+  "releaseRequest": "POST /v1/appStoreVersionReleaseRequests",
+  "releaseRequestStatus": 201,
+  "releasedAt": "2026-11-16T17:39:38Z",
+  "stateAfter": "READY_FOR_SALE",
+  "maintainerInstruction": "can you release directly each time (2026-11-16); each time for mac too",
+  "publicListingObserved": true,
+  "publicListing": "itunes.apple.com lookup (US) reports version 1.20.4, currentVersionReleaseDate 2026-11-16T17:39:35Z, observed 2026-11-16",
+  "physicalDeviceAcceptanceVerified": false
+}

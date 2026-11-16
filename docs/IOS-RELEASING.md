@@ -1,14 +1,14 @@
 # Publish an iOS build to TestFlight
 
-## Current App Store review — 1.20.4 (44)
+## App Store production — 1.20.4 (44)
 
-Apple accepted the iPhone/iPad and embedded-Watch submission at **2026-10-31T17:01:17Z**.
-Submission `6048f839-fd00-43f6-be16-21a87b0d1252` and the selected version read
-**WAITING_FOR_REVIEW**. The maintainer explicitly directed **“Submit iOS/Watch now; defer physical
-acceptance”** for this build. This is a scoped exception, not a completed physical test or a general
-change to the gates below. English (US), build 44, all 46 verified images and **MANUAL** release are
-preserved. No approval, manual public release or new public availability is claimed.
-[Review receipt](releases/ios-1.20.4-build44-review.json).
+Apple approved the 1.20.4 (44) submission (`6048f839-fd00-43f6-be16-21a87b0d1252`, submitted
+2026-10-31T17:01:17Z with physical acceptance deferred at the maintainer's direction). The version
+read **PENDING_DEVELOPER_RELEASE** on 2026-11-16. Under the new release-on-approval instruction it
+was released at **2026-11-16T17:39:38Z** (`appStoreVersionReleaseRequests`, HTTP 201). The version
+then read **READY_FOR_SALE**, and the public US listing reports 1.20.4 (observed 2026-11-16).
+[Review receipt](releases/ios-1.20.4-build44-review.json) ·
+[Release receipt](releases/ios-1.20.4-build44-release.json).
 
 ## Current TestFlight checkpoint — 1.20.4 (44)
 
@@ -123,8 +123,8 @@ For the separate official production review, use the canonical
 The maintainer’s standing authorization of **2026-10-28 (Toronto)** covers every ready iOS version;
 submit without renewed permission once production acceptance, exact-source validation/CI, en-US
 metadata/readback and fresh processed screenshots including Duo and embedded Watch are complete.
-Preserve the existing release mode, leave manual-release versions pending after approval and retain
-an actual Apple review receipt. OS authentication and readiness gates are not waived.
+Use release type `AFTER_APPROVAL` and release any version left pending developer release
+(maintainer instruction, 2026-11-16), and retain an actual Apple review receipt. OS authentication and readiness gates are not waived.
 TestFlight availability does not prove submission, approval or public release.
 
 **Cadence.** Publish when a batch of merged iOS work is complete, or when a single user-visible fix

@@ -1,0 +1,8 @@
+1. Update from build 44: What’s New identifies 1.20.5 (45) and "Share summaries and keep recording", appears once, reopens from More, and keeps Continue and older entries reachable at the largest text size.
+2. In a conversation with a Quick summary and a Full summary, open More → Share: Full summary, Quick summary and (when audio is saved) Audio are listed, and nothing that contains the transcript. Copy Full summary and paste it into Notes: title, date and only that summary, with no Markdown markers, notes or transcript. Repeat for Quick summary.
+3. In History, swipe a conversation right and tap Share: the share sheet opens at once with the full summary. A conversation without a summary has no swipe Share. Touch and hold a conversation: Share offers the same choices as More.
+4. Audio offers the saved .m4a files; AirDrop one to a Mac and play it.
+5. Start recording, switch to an authenticator or another app, approve a sign-in or accept a request, then return: recording is still running and new words appear. During a call that ends while you are in another app, the notice says recording resumes when you return, and it does.
+6. More → Export as → each format opens the share sheet with a named file (Markdown, plain text, JSON, and subtitles when lines are timed).
+
+Privacy: Share never sends the transcript or notes. Physical-device results, production readiness and App Store listing media remain separate from TestFlight eligibility.
