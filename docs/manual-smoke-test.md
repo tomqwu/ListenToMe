@@ -981,6 +981,18 @@ retry safely without changing the live microphone's speaker run. After relaunch,
 receive new numbers because voiceprints are never saved. Verify that raw audio is deleted after text
 and labels are saved, and that relabeling does not request another AI summary. TestFlight 1.19.0 (38) includes Watch with accepted/processed package evidence; the physical #181 checks above remain pending for production.
 
+### Long Watch recording sync (WATCH-017; physical acceptance pending)
+
+On a paired Watch and iPhone with Identify speakers on, record at least two hours on the Watch with
+the wrist down, then Stop. Keep the iPhone away from ListenToMe until the Watch waiting count clears.
+Open ListenToMe on iPhone: History shows the recording under **Waiting from Apple Watch** with its
+part count. Partway through the import, lock the iPhone. Unlock and reopen ListenToMe. Earlier text
+stays in the conversation, the waiting part count is lower and keeps falling, and the import resumes.
+The finished conversation is in order, with no repeated or missing lines at the 10-minute pass
+boundaries, and no Watch audio stays in the inbox. Simulator coverage
+(`MobileWatchLongRecordingTests`) uses a fake transcriber and speaker model. It does not prove
+physical capture, WatchConnectivity delivery or on-device model time.
+
 ### Watch audio retention (#225; TestFlight beta, physical acceptance pending)
 
 On a paired Watch/iPhone, record while disconnected and confirm pending audio stays on Watch.

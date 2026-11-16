@@ -224,10 +224,32 @@ Focused evidence is preserved at
 
 CI/merge, archive/export, signature/profile checks and accepted-upload/tester readback are complete. [Publication receipt](releases/ios-1.19.0-build38.json) records app source `e43244f` and separately validated uploader source `ea2c05f`. The archive was reused unchanged after the signing-helper fix.
 
+## Long recording import fix (WATCH-017, unreleased)
+
+**Reported:** hours-long Watch recordings did not reach iPhone History. **Cause:** the transfer
+was not at fault. The Watch writes a closed AAC-LC part every 5 minutes (16 kHz mono, about 32 kbps,
+about 1.2 MB per part). Each part goes as its own `transferFile`, well under the phone's 10 MB
+per-part check. Parts stay in the durable Watch outbox until `didFinish` succeeds, and the phone
+files each one before the delegate call returns. The problem was on iPhone: the foreground import
+labelled speakers across *every* waiting part before it transcribed any part. Leaving the
+foreground, including auto-lock, cancels the import and discards that unsaved speaker work. Speaker
+identification is on by default, and labelling a three-hour recording takes longer than a typical
+foreground visit, so the import started over each time and never saved any text.
+
+**Fix:** each pass labels and transcribes at most `MobileSession.watchPartsPerPass` (2) parts,
+about 10 minutes of audio. It saves their text and deletes their audio before the next pass.
+Speaker identities carry across passes, and across a foreground interruption, in memory only. An
+interruption costs at most one pass. A relaunch can still number a returning voice anew, because
+voiceprints are never saved.
+`MobileWatchLongRecordingTests/testInterruptedLongImportKeepsProgressAndResumes` reproduced the
+failure: no text and no audio removed after an interruption. It passes with the fix. Physical
+multi-hour Watch/iPhone acceptance is pending.
+
 ## Physical beta feedback and production acceptance still pending
 
 Check installation on the paired Watch, Record/Stop and audible speech, wrist-down continuity,
-interruption followed by Continue, disconnected capture and one-time reconnection sync, pending
+interruption followed by Continue, disconnected capture and one-time reconnection sync, a
+multi-hour recording whose iPhone import is interrupted by screen lock and resumes (WATCH-017), pending
 Delete, app termination/relaunch and storage/battery limits. On iPhone, verify text order and
 timestamps, supported language fallback, summaries and playback with saving on/off. Include the
 known long-wait/gap behavior for a recording killed mid-chunk described in the

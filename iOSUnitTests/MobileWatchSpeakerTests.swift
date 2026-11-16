@@ -182,7 +182,8 @@ final class MobileWatchSpeakerTests: XCTestCase {
         for _ in 0..<100 where session.state != .recording { try await Task.sleep(for: .milliseconds(10)) }
         XCTAssertEqual(session.state, .recording, "Start must finish while the Watch model is still held")
         XCTAssertTrue(transcriber.calls.isEmpty)
-        XCTAssertTrue(session.watchSpeakerContexts.isEmpty)
+        XCTAssertTrue(session.watchSpeakerContexts.values.allSatisfy { $0.isEmpty },
+                      "A cancelled pass keeps only labels it finished, and finished none")
         XCTAssertTrue(FileManager.default.fileExists(atPath: session.watchInbox.chunkURL(recordingID: recording, index: 0).path))
         await model.releasePass()
         // Do not resume the inbox at Stop in this test; no late Watch result may become transcript.
