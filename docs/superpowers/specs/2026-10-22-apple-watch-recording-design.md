@@ -331,12 +331,16 @@ never finalized, because the app was killed mid-chunk, is discarded and the reco
    - Title "Apple Watch · <start time>".
    - Segments with `source: .you` and `speakerName: "Apple Watch"`.
 
-   The locale is pinned in the ledger before the first transcription (decision 7, updated by #200). Chunks are fed **in index order into one `SpeechAnalyzer` session** as buffers carrying
-   `bufferStartTime = startOffset` (F14), so words that span a chunk boundary are not cut. The
-   segments from each chunk are appended and the archive is saved. Only then is that chunk's audio
-   deleted and the chunk marked transcribed in the manifest. A drain that is interrupted by
-   backgrounding or by the user starting a live recording resumes at the first chunk not yet
-   transcribed. Only that resume point can split a word.
+   The locale is pinned in the ledger before the first transcription (decision 7, updated by #200). Chunks are fed **in index order** in bounded passes of at most
+   `MobileSession.watchPartsPerPass` (2) chunks, about 10 minutes of audio (WATCH-017). Each pass
+   uses one `SpeechAnalyzer` session, with buffers carrying `bufferStartTime = startOffset` (F14),
+   so a word that spans the chunk boundary inside a pass is not cut. The segments from each chunk
+   are appended and the archive is saved. Only then is that chunk's audio deleted and the chunk
+   marked transcribed in the manifest. A drain that is interrupted by backgrounding or by the user
+   starting a live recording resumes at the first chunk not yet transcribed. Only a pass boundary
+   or that resume point can split a word. Speaker labelling (#192) runs per pass too. An earlier
+   design labelled the whole recording before any text was saved. An hours-long recording then never
+   finished, because each loss of the foreground discarded the unsaved labelling.
 4. **Complete.** When the last chunk is transcribed, the inbox folder is removed, History shows the
    conversation with a "From Apple Watch" note, and a status message says so. The open conversation
    is not switched, and no notification is posted (decisions 6 and 8). The conversation then

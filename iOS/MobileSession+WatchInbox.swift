@@ -31,6 +31,8 @@ extension MobileSession {
     /// is reached; a chunk's audio is deleted only after the save that covers it.
     static let watchLinesPerSave = 25
     static let watchSaveInterval: TimeInterval = 10
+    /// At most this many parts (about 10 minutes of audio) are labelled and transcribed per pass.
+    static let watchPartsPerPass = 2
 
     /// Starts transcribing waiting watch recordings when the app is active and idle. Triggered on
     /// `.active`, when the session stops being busy, and when a chunk arrives. A chunk that arrives
@@ -190,7 +192,11 @@ extension MobileSession {
                 try updateWatchRecord(recordID, note: note)
                 _ = try watchInbox.update(recordingID) { $0.noteGaps(batch.newGaps) }
             }
-            try await transcribeWatchChunks(batch.indices, of: ledger, recordID: recordID)
+            // A bounded pass: speaker labels and text for the first parts are saved, and their audio
+            // deleted, before the next parts are touched. A long recording therefore keeps its progress
+            // when the iPhone leaves the foreground, instead of starting over every time (WATCH-017).
+            try await transcribeWatchChunks(Array(batch.indices.prefix(Self.watchPartsPerPass)), of: ledger,
+                                            recordID: recordID)
             // Re-read: chunks may have arrived while this batch was transcribing.
             guard let fresh = watchInbox.ledger(recordingID) else { return }
             ledger = fresh

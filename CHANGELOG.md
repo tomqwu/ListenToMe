@@ -11,6 +11,15 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
+## iOS (unreleased)
+
+- **Long Apple Watch recordings now finish importing on iPhone.** An hours-long Watch recording
+  used to be labelled for speakers across its whole length before any text was saved, and leaving
+  ListenToMe or locking the screen started that work over. The recording never reached History
+  and stayed under **Waiting from Apple Watch**. The import now handles about ten minutes of audio
+  at a time and saves that text before moving on. An interrupted import resumes where it stopped,
+  with no repeated lines. Physical multi-hour Watch acceptance is pending. (`WATCH-017`)
+
 ## iOS 1.20.5 (45) — 2026-11-16 (TestFlight; App Store review)
 
 Apple accepted the upload at **2026-11-16T19:38Z** from `30fe9ca`. Build 45 is **VALID /

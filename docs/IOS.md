@@ -97,6 +97,16 @@ Physical phone/iPad translation, screen-lock, multilingual and Watch acceptance 
 Public production remains **1.19.1 (39)**; this beta made no public review submission or listing-media
 upload. Mac changes remain unreleased, and **v1.4.4** remains GitHub Latest.
 
+## Unreleased long Watch recording import (WATCH-017)
+
+The iPhone imports a waiting Apple Watch recording in passes of at most two parts, about 10 minutes
+of audio. Each pass labels speakers, saves text and deletes its audio before the next pass starts.
+Before this change, the import labelled speakers across the whole recording before saving any text.
+A loss of the foreground discarded that work, so an hours-long recording never reached History.
+The Watch transfer itself (5-minute AAC parts sent one at a time through a durable outbox) was not
+at fault. See [Watch beta: long recording import fix](watch-beta.md#long-recording-import-fix-watch-017-unreleased).
+Physical multi-hour acceptance is pending.
+
 ## Unreleased Watch inbox redelivery repair
 
 The phone keeps the first filed Watch audio and metadata when a duplicate arrives before a missing
