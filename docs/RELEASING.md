@@ -11,8 +11,9 @@ without renewed permission. Follow the separate
 platform/build acceptance, en-US metadata, fresh Mac screenshots and Apple review receipt. An iOS
 submission does not submit Mac. Production readiness still requires exact-source validation/CI,
 installed sandbox/actual OTHERS acceptance, complete metadata and processed screenshot verification.
-Preserve the existing release mode, including pending manual release after approval; standing review
-authority does not waive OS authentication or authorize a manual public release.
+Release each approved Mac App Store version directly (maintainer instruction, 2026-11-16): use
+`AFTER_APPROVAL` and release any version left pending developer release. Standing review authority
+does not waive OS authentication.
 
 ## Mac App Store distribution
 

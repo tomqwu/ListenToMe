@@ -63,10 +63,10 @@
     },
     {
       "id": "RELEASE-004",
-      "name": "Identify the History and recording-controls beta and bundled changes accurately",
-      "given": "a user updates to the Watch-enabled History and recording-controls beta using standard or the largest accessibility text",
+      "name": "Identify the share-summaries and keep-recording beta and bundled changes accurately",
+      "given": "a user updates to the Watch-enabled share-summaries and keep-recording beta using standard or the largest accessibility text",
       "when": "What\u2019s New appears or is reopened",
-      "then": "the app identifies version 1.20.4 build 44 with its Clearer History and recording controls notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
+      "then": "the app identifies version 1.20.5 build 45 with its Share summaries and keep recording notes, acknowledges the update once, and keeps the oldest release heading and Continue usable at the largest text size",
       "covers": [
         "project.yml",
         "iOS/MobileReleaseNotes.swift",

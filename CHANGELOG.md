@@ -11,7 +11,7 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
-## iOS (unreleased, on `main`)
+## iOS 1.20.5 (45) — 2026-11-16
 
 - **Share sends the summary, never the transcript.** **More → Share** and a History row's
   touch-and-hold **Share** offer **Full summary**, **Quick summary** and **Audio**, each only when the

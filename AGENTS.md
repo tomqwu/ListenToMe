@@ -231,10 +231,13 @@ Once all production-readiness gates below are satisfied, submit that version for
 it through Apple's submission acceptance and status readback without asking for renewed permission
 or handing Submit back to the maintainer. Check for an existing submission before creating another.
 An explicit later hold, draft-only or local-only instruction still applies. OS authentication belongs
-to the maintainer; this authorization does not waive acceptance gates or change the existing release
-mode. In particular, leave a version set for manual release pending after approval; do not release it
-manually or change it to automatic without a separate instruction. An existing automatic mode stays
-unchanged. Documentation-only policy updates do not themselves create a ready version or require a
+to the maintainer; this authorization does not waive acceptance gates.
+
+**Release on approval (maintainer instruction, 2026-11-16):** "release directly each time", and "each
+time for mac too". Every iOS and Mac App Store version is released as soon as Apple approves it.
+Create or set each version with release type `AFTER_APPROVAL`. If a version is found in
+`PENDING_DEVELOPER_RELEASE`, release it (`POST /v1/appStoreVersionReleaseRequests`) without asking,
+read back `READY_FOR_SALE` and record the receipt. iOS 1.20.4 was released this way on 2026-11-16. Documentation-only policy updates do not themselves create a ready version or require a
 new binary, version bump or upload.
 
 Before submitting an authorized production version:
@@ -254,11 +257,10 @@ Before submitting an authorized production version:
    [the iOS runbook](docs/IOS-RELEASING.md#screenshot-capture-and-app-store-handoff-255).
    Verify asset processing, order and downloaded images; resolve stale or missing images before
    submission. A TestFlight upload does not update the public listing.
-4. Verify the intended release mode, preserving its existing setting unless the maintainer directs
-   otherwise. Submit the authorized version for review, then retain sanitized submission/version/
+4. Verify the release type is `AFTER_APPROVAL` (release on approval, above). Submit the authorized version for review, then retain sanitized submission/version/
    build IDs, source, locale, screenshot manifest, timestamp and Apple's readback state. A saved
    draft or prepared submission is not a submitted review.
-5. Report **submitted for review**, **approved**, **pending manual release** and **publicly available**
+5. Report **submitted for review**, **approved**, **released (READY_FOR_SALE)** and **publicly available**
    only when each state is actually observed. Submission acceptance does not prove approval or
    public release; verify the public listing separately before claiming availability.
 
