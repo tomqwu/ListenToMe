@@ -1,0 +1,35 @@
+{
+ "version": "1.20.6",
+ "build": "46",
+ "sourceCommit": "6f22e029faf357519f35162ddbfbd2d39b0230f9",
+ "sourceTree": "a507c5e27ffa6762c0eaf20f47d7fdd769e425fe",
+ "archivedFromBranchHead": "5a6f9522bb64455dcd15bb5fa45cc4516dff9dd9",
+ "uploadAcceptedAt": "2026-11-16T22:05:48.922723+00:00",
+ "authentication": "app_store_connect_api_key",
+ "signing": "manual (existing local App Store profiles; API key lacks cloud-signing permission)",
+ "exportOptionsSHA256": "221b59b95b7c6e07653a1f89432e8b53b2fde5aef8156639ebf768bd392b59f8",
+ "localExportIPASHA256": "e945bf02220e3eb5305098f703c3bd8f8b646a38c821591b14eb9e2179bae796",
+ "watchEmbedded": true,
+ "bundlesVerified": "phone/Share/Watch 1.20.6 (46), codesign strict OK, App Store profiles expire 2027-06-25 with no device lists, get-task-allow false, App Group on phone/Share, WKApplication true, companion com.tomwu.ListenToMe.ios, not independent, watchOS 26.0 minimum",
+ "appleBuildId": "b478bb4f-70b0-4521-8d16-cbdfc52b00dd",
+ "processingState": "VALID",
+ "internalBuildState": "IN_BETA_TESTING",
+ "devGroupHasBuild": true,
+ "devGroupAssignedNow": false,
+ "devTesterStates": [
+  "INSTALLED",
+  "INSTALLED"
+ ],
+ "whatToTestReadbackMatches": true,
+ "betaDescriptionReadbackMatches": true,
+ "locale": "en-US",
+ "tag": "ios-v1.20.6-build46",
+ "githubPrerelease": "https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.6-build46",
+ "changes": [
+  "#372 WATCH-017 long Apple Watch recording import in bounded passes (fixes #371)",
+  "#373 1.20.6 (46) notes and metadata"
+ ],
+ "localValidation": "make ios-test TEST SUCCEEDED (102 UI / 5 skipped, 518 unit / 7 skipped, 0 failures) on 0d17e2b; full ListenToMeIOSUnitTests 518 / 7 skipped / 0 failures on final fix 9d480bc; make watch-test 29 unit + 6 UI, 0 failures; make ios-build and make watch-build succeeded; release-notes UI + unit tests 7/0 on the train; BDD 267 scenarios; all three hosted checks green on #372 and #373",
+ "appStoreReview": "not submitted; 1.20.5 (45) remains in review (WAITING_FOR_REVIEW, AFTER_APPROVAL) and was not touched",
+ "physicalDeviceAcceptance": "pending: multi-hour Watch recording synced to iPhone not performed"
+}

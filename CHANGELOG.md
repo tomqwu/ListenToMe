@@ -11,7 +11,13 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
-## iOS 1.20.6 (46) — 2026-11-16
+## iOS 1.20.6 (46) — 2026-11-16 (TestFlight)
+
+Apple accepted the upload at **2026-11-16T22:05Z** from `6f22e02`. Build 46 is **VALID /
+IN_BETA_TESTING** with the internal Dev group, and its en-US What to Test was read back. Version 1.20.5
+remains in App Store review, unchanged. Physical multi-hour Watch acceptance is pending.
+[TestFlight receipt](docs/releases/ios-1.20.6-build46.json) ·
+[GitHub pre-release](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.6-build46).
 
 - **Long Apple Watch recordings now finish importing on iPhone.** An hours-long Watch recording
   used to be labelled for speakers across its whole length before any text was saved, and leaving

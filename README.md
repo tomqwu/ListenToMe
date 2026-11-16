@@ -32,7 +32,8 @@ macOS-only, and there is no Mac↔iOS sync. See
 [parity with macOS](docs/IOS.md#parity-with-macos) and
 [the version policy](docs/IOS.md#version-policy).
 
-**1.20.5 (45)**, on TestFlight and in App Store review, makes **Share** send only a summary (or saved
+**1.20.6 (46)**, on TestFlight, makes hours-long Apple Watch recordings finish importing on iPhone,
+even when the import is interrupted. **1.20.5 (45)**, in App Store review, makes **Share** send only a summary (or saved
 audio), never the transcript, and keeps recording when you switch to another app. **1.20.4 (44)**, now
 on the App Store, added History **Refresh search**, cancellation when a History question changes,
 clearer workspace controls and preservation of duplicate Watch deliveries. It retains translation,
@@ -98,7 +99,9 @@ make ios-test
 
 These native simulator previews use synthetic demonstration content captured on `1dcda25`, whose
 source tree is identical to the released build's `30fe9ca`. Tap any preview for its original
-resolution. [Capture manifest](docs/images/ios/release-1.20.5/manifest.json) ·
+resolution. They remain current for TestFlight **1.20.6 (46)**, whose only change is the iPhone's
+Watch import pipeline, with no visible layout change.
+[Capture manifest](docs/images/ios/release-1.20.5/manifest.json) ·
 [TestFlight receipt](docs/releases/ios-1.20.5-build45.json) ·
 [App Store review receipt](docs/releases/ios-1.20.5-build45-review.json).
 

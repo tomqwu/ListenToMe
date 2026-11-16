@@ -9,7 +9,14 @@ deferred physical acceptance; installation, recording, paired transfer, wrist-do
 checks remain unverified. No new public release is claimed.
 [Review receipt](releases/ios-1.20.4-build44-review.json).
 
-## Current companion — 1.20.5 (45)
+## Current companion — 1.20.6 (46)
+
+TestFlight **1.20.6 (46)** (accepted November 16, 2026, at 22:05 UTC from `6f22e02`) embeds the Watch
+companion. Its iPhone import now handles long Watch recordings in bounded passes (`WATCH-017`, below).
+The exported Watch bundle passed signature, profile and embedding checks.
+[Receipt](releases/ios-1.20.6-build46.json). Physical multi-hour Watch acceptance remains pending.
+
+## Earlier companion — 1.20.5 (45)
 
 TestFlight **1.20.5 (45)** (accepted November 16, 2026, from `30fe9ca`) embeds the same Watch
 companion, unchanged since 1.20.4. Its exported Watch bundle passed signature, profile and embedding
@@ -224,7 +231,7 @@ Focused evidence is preserved at
 
 CI/merge, archive/export, signature/profile checks and accepted-upload/tester readback are complete. [Publication receipt](releases/ios-1.19.0-build38.json) records app source `e43244f` and separately validated uploader source `ea2c05f`. The archive was reused unchanged after the signing-helper fix.
 
-## Long recording import fix (WATCH-017, unreleased)
+## Long recording import fix (WATCH-017, TestFlight 1.20.6 (46))
 
 **Reported:** hours-long Watch recordings did not reach iPhone History. **Cause:** the transfer
 was not at fault. The Watch writes a closed AAC-LC part every 5 minutes (16 kHz mono, about 32 kbps,

@@ -9,7 +9,18 @@ is selected, and en-US/en-CA What's New and the updated review notes were read b
 pixel for pixel. Physical-device acceptance is deferred at the maintainer's direction.
 [Review receipt](releases/ios-1.20.5-build45-review.json).
 
-## Current TestFlight checkpoint — 1.20.5 (45)
+## Current TestFlight checkpoint — 1.20.6 (46)
+
+Apple accepted the upload at **2026-11-16T22:05Z** from `6f22e02` (helper, API key, manual signing with
+the existing local App Store profiles). The archive came from branch head `5a6f952`, whose tree equals
+the merged tree `a507c5e`. Build `b478bb4f-70b0-4521-8d16-cbdfc52b00dd` is **VALID / IN_BETA_TESTING**.
+The internal Dev group (automatic access) includes it, and its en-US What to Test and beta description
+were read back. It carries the long Apple Watch recording import fix (`WATCH-017`). No review submission
+was made, because 1.20.5 (45) is still in review.
+[Publication receipt](releases/ios-1.20.6-build46.json) ·
+[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.6-build46).
+
+## Earlier TestFlight checkpoint — 1.20.5 (45)
 
 Apple accepted the upload at **2026-11-16T19:38Z** from `30fe9ca` (helper, API key, manual signing:
 the API key lacks cloud-signing permission, so the existing local App Store profiles were used).
