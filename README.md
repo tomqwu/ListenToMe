@@ -322,7 +322,7 @@ make run
 
 Maintainers and agents follow [AGENTS.md](AGENTS.md#release-trains-when-to-publish) and
 [CLAUDE.md](CLAUDE.md#testflight-and-official-app-store-review). Changes merge with validation and
-the required CI checks; publication is a separate, batched release train.
+the required CI checks; every merged app change then starts its own release train.
 
 - **README screenshots:** refresh the gallery for UI changes and every release train. Follow the
   [device coverage, layout and provenance policy](AGENTS.md#readme-screenshot-gallery), including

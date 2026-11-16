@@ -55,9 +55,9 @@ Installed-app GUI/audio acceptance remains required separately, as the gate on p
 ## Definition of done for fixes and features
 
 A change is done when it is **merged to `main`** with the three required checks green, its relevant
-tests written and passing, and every affected doc updated. Publication is a separate, batched step
-and is **not** part of a change being done. Do not hold a finished change open waiting for a release,
-and do not publish a release merely because a change merged.
+tests written and passing, and every affected doc updated. Publication is the next step, not part of
+a change being done: every merged change to a shipped app starts its own release train right away
+(see below). Do not hold a finished change open waiting for a release.
 
 1. Implement the change and run relevant tests, lint, coverage, and the app build.
 2. Exercise the changed user flow locally and inspect its rendered UI. For audio changes, verify
@@ -78,33 +78,32 @@ switch another active checkout merely to complete cleanup. Record any deferred b
 and finish it once safe. Branch cleanup does not authorize deleting worktrees or evidence.
 
 Merged work is merged. Until it has actually been published under the rules below, never describe it
-as released, shipped, available to users, or on the maintainer's phone. "Merged to `main`, riding the
-next release train" is a complete and accurate status report.
+as released, shipped, available to users, or on the maintainer's phone. "Merged to `main`, its release
+train is running" is a complete and accurate status report.
 
 ## Release trains: when to publish
 
-Publication is batched into release trains. It is not performed once per fix.
-Every major iOS release includes a validated TestFlight build (maintainer instruction,
-2026-10-24); do not finish a major release with only a tag or GitHub release page.
+**Each change leads to a release** (maintainer instruction, 2026-11-16). Publication is not batched
+and has no per-day cap. Every major iOS release includes a validated TestFlight build (maintainer
+instruction, 2026-10-24); do not finish a major release with only a tag or GitHub release page.
 
-- Publish when a batch of merged work is complete, or when a single user-visible fix warrants going
-  out on its own.
-- **At most one macOS release and at most one TestFlight build per day, for trains an agent starts
-  on its own initiative.** Never one release per merged pull request.
-- **A train the maintainer calls goes out the same day**, even if that platform's train already
-  departed today. "Publish", "release what's on `main`" and "publish as always" each call a train.
-- **Work the maintainer requested from tester feedback ships on a TestFlight train as soon as it is
-  merged and its candidate checks pass**, without waiting for the next day or asking again.
-  Physical-device acceptance is not required for that beta upload (see the ladder below).
-- Otherwise, if the day's self-started train for that platform has already departed, the change
-  rides the next one. Leave it merged with its changelog entry unreleased and say so;
-  merged-but-unpublished is the expected state, not an unfinished task.
-- A fix that warrants its own train is one users are actually hitting in a published build: a crash,
-  data loss, a broken capture, transcription or model-routing path, or a regression. Refactors,
-  tests, and work behind an unfinished feature wait for the next train.
-- Documentation-only changes never require a binary release, a version bump or an upload.
-- The maintainer may call a train at any time, including on a day a train already departed;
-  "release what's on `main`" is a complete instruction.
+- **Every merged change that alters a shipped app starts that platform's release train as soon as it
+  is merged and its candidate checks pass**, even if a build already went out that day. Do not ask
+  first and do not wait for other work. For iOS (iPhone/iPad and the embedded Watch app) that is a
+  TestFlight build. Physical-device acceptance is not required for that beta upload (see the ladder
+  below); record it as pending.
+- If a change merges while that platform's train is already running, include it when the train has
+  not yet built its candidate. Otherwise start the next train as soon as the running one is
+  published. Never leave merged app changes waiting for a later batch.
+- A blocked train (for example an unaccepted Apple agreement or missing sign-in) stays the
+  maintainer's to unblock. Report exactly what is blocking it and resume as soon as it clears.
+- The maintainer may also call a train at any time. "Publish", "release what's on `main`" and
+  "publish as always" each call one.
+- Documentation-, CI- and tooling-only changes do not alter a shipped app and never require a
+  binary release, a version bump or an upload.
+- **macOS releases stay paused at 1.4.4 (14)** until the maintainer lifts the pause (see
+  [RELEASING.md](docs/RELEASING.md#release-cadence-trains-not-one-release-per-fix)). Mac changes merged
+  during the pause stay unreleased in `CHANGELOG.md`.
 
 Publication itself stays authorized: when a train is due, run the workflow below without asking the
 maintainer to repeat "publish", including for work merged by another session. An explicit draft,

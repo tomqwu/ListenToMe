@@ -127,15 +127,13 @@ Preserve the existing release mode, leave manual-release versions pending after 
 an actual Apple review receipt. OS authentication and readiness gates are not waived.
 TestFlight availability does not prove submission, approval or public release.
 
-**Cadence.** Publish when a batch of merged iOS work is complete, or when a single user-visible fix
-warrants its own build. **At most one TestFlight build per day for trains an agent starts on its own
-initiative**, never one per merged pull request. A train the maintainer calls ("publish", "release
-what's on `main`", "publish as always") goes out the same day even if a build already went out, and
-work the maintainer requested from tester feedback ships on a TestFlight train as soon as it is merged
-and its candidate checks pass, without waiting for the next day or asking again. Otherwise, if
-today's self-started build has already gone out, the change rides the next train: leave it merged, keep its
-`CHANGELOG.md`/release-note entry unreleased, and report it as merged rather than released.
-Documentation-only changes never require a new binary, version bump or upload. See
+**Cadence.** Each change leads to a release (maintainer instruction, 2026-11-16). Every merged
+change to the iPhone/iPad app, its Share extension or its embedded Watch app starts a TestFlight train
+as soon as it is merged and its candidate checks pass. There is no batching and no per-day cap, and
+you do not ask first, even if a build already went out that day. A change that merges while a train
+is running goes into it if the candidate is not built yet. Otherwise the next train starts as soon as
+the running one is published. Documentation-, CI- and tooling-only changes never require a new
+binary, version bump or upload. See
 [AGENTS.md](../AGENTS.md) for the full policy and the candidate → verified → published ladder.
 
 When a train is due the maintainer's instruction to release already authorizes the upload; do not ask

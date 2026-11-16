@@ -331,12 +331,10 @@ has published TestFlight 1.18.1 (36).
   **patch** bump for fixes.
 - **`CURRENT_PROJECT_VERSION`** (iOS): increments monotonically on every upload and **never resets**
   when `MARKETING_VERSION` changes. The app and share-extension targets keep identical values.
-- **One release per batch of work, not per fix** — the release trains in
-  [AGENTS.md](../AGENTS.md) govern both platforms: at most one macOS release and one TestFlight
-  build per day for trains an agent starts on its own, never one release per merged pull request.
-  A train the maintainer calls goes out the same day even if one already departed, and work the
-  maintainer requested from tester feedback ships on a TestFlight train once merged and its
-  candidate checks pass.
+- **Each change leads to a release** (maintainer instruction, 2026-11-16). Under the
+  [release trains in AGENTS.md](../AGENTS.md#release-trains-when-to-publish), every merged iOS app
+  change starts a TestFlight train once its candidate checks pass. There is no batching and no
+  per-day cap. macOS releases stay paused at 1.4.4 (14) until the maintainer lifts the pause.
 - **Tags:** `ios-vX.Y.Z-buildN` for iOS, `vX.Y.Z` for macOS. An iOS build is never published as the
   latest macOS release.
 - **`CHANGELOG.md` carries both platforms**, newest first, interleaved by date.
