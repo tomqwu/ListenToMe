@@ -234,7 +234,7 @@ this table in the same PR, and never fork a copy into `App/` or `iOS/`.
 | Speaker identification: `SpeakerDiarizer` and `SpeakerAudioBuffer` (`SharedPlatform/`, FluidAudio), `SpeakerIdentityTracker`, `SpeakerLabeling`, `SpeakerStats`, `SpeakerAnalysisPolicy` | `App/MeetingView+Speakers.swift` | `MobileSpeakers`, `iOS/MobileSession+Speakers.swift`; iOS language detection (#197) reuses `SpeakerAudioBuffer`, keeping its trailing two minutes (#199) |
 | Save to folder (#53): `MarkdownVault` (note format and file names), `MarkdownVaultWriter` (bookmark, atomic coordinated write, failure wording), `MarkdownVaultSync` (`SharedPlatform/`, setting, queue, status, Retry) | `App/MacVaultSettings.swift`, `App/MeetingView+Conversations.swift` (`checkpoint`) | `iOS/MobileVaultSettings.swift`, `iOS/MobileSession+Vault.swift` |
 | Domain vocabularies (#222): `VocabularyCatalog` (bundled presets and their validation), `VocabularySettings` / `ActiveVocabulary` (My terms, defaults, the 100-term recognition cap), `VocabularyPrompt` (prompt guidance, correction glossary), `VocabularyClassifier` / `VocabularySuggestionTracker` (on-device suggestion); `SessionVocabulary` and `SpeechVocabularyContext` (`SharedPlatform/`, banner state and the `AnalysisContext`) | `App/MacVocabularyViews.swift`, `MeetingSession.contextualStrings`, `App/SpeechAnalyzerTranscriber.swift` | `iOS/MobileSession+Vocabulary.swift`, `iOS/MobileVocabularyViews.swift`, `iOS/MobileRecorder.swift` |
-| Export formats and file names (#130): `SessionExporter` (Markdown, plain text, SRT, WebVTT, JSON v1, file names), `TranscriptTimestamp` (which lines are timed, `[mm:ss]` and cue times); the conversation's own language (#206): `ConversationLanguages` on `SessionRecord` | `App/MeetingView+Export.swift` (Export menu, History detail sheet), `noteCaptureLanguage` | `iOS/MobileSessionExport.swift` (`ConversationExportFile`, **Export as**), `MobileLanguageDetection.languageChanges` |
+| Export formats and file names (#130): `SessionExporter` (Markdown, plain text, SRT, WebVTT, JSON v1, file names), `TranscriptTimestamp` (which lines are timed, `[mm:ss]` and cue times), `ConversationShare` (what Share offers and the text of each summary); the conversation's own language (#206): `ConversationLanguages` on `SessionRecord` | `App/MeetingView+Export.swift` (Export menu, History detail sheet), `noteCaptureLanguage` | `iOS/MobileSessionExport.swift` (`ConversationExportFile`, **Export as**, `ConversationShareMenu`), `MobileLanguageDetection.languageChanges` |
 | `SessionSearch` — History keyword search and its matching rules | `App/SessionSearchView.swift`, `App/MeetingView.swift` | `MobileHistoryView` via `MobileSession` |
 | Semantic History search and Ask your history (#57): `HistoryIndex` (on-device index beside the archive), `HistoryChunker`, `NaturalLanguageEmbedder`, `HistoryRanking`, `HistoryQuestion`; `HistorySearchModel` (`SharedPlatform/`) | `App/SessionStore.swift`, `App/SessionSearchView.swift`, `App/HistoryAskPanel.swift`, `App/MeetingView+HistoryAsk.swift` | `iOS/MobileSession+HistorySearch.swift`, `iOS/MobileHistoryView.swift`, `iOS/MobileHistoryAskView.swift` |
 | `AppleIntelligenceProvider` (`SharedPlatform/`) — on-device transport and its failure wording | `App/MeetingView.swift` | `MobileSession`, `MobileAISettings` |
@@ -1243,16 +1243,17 @@ own value).
 
 **More → Export as** (the open conversation) and **Export as** in a History row's context menu offer
 Markdown, plain text, Subtitles (SRT), Subtitles (WebVTT) and JSON, each as a file in the share sheet
-(`ConversationExportFile`, a `Transferable` with one `FileRepresentation` per format). The file is
-written to `tmp/ConversationExports/<uuid>/` with `PrivateStorage` data protection only when a share
-destination asks for it. The folder is removed at the next export, at launch, and by an owner in
+(`ConversationExportFile`). The file is written to `tmp/ConversationExports/<uuid>/` with
+`PrivateStorage` data protection when a format is chosen, then handed to the share sheet (a `ShareLink`
+inside a menu could close without presenting it). The folder is removed at the next export, at launch, and by an owner in
 `conversationDataOwners` on every Delete and Delete all, so no export copy outlives the conversation
 in the app. Names (at most 200 UTF-8 bytes, cut on whole characters) come from the title
 and date (`Standup 2026-10-23 1435.srt`, made filesystem-safe; a default title becomes
 `Conversation`). Every iPhone and Apple Watch line carries the recognizer's audio range, cumulative
 across resumed recordings, so Markdown and plain text show `[mm:ss]` and the subtitle formats are
-offered; a conversation without timed lines (imported notes only) offers neither. The swipe **Share**
-and **Share Markdown** keep sharing text. Cue rules, timestamp sources per engine and the versioned
+offered; a conversation without timed lines (imported notes only) offers neither. **Share** (More, the
+History swipe and touch-and-hold menu) sends readable text: Quick summary or Full summary alone,
+or the Whole conversation; or the saved Audio files. Its choices come from Core `ConversationShare`. Cue rules, timestamp sources per engine and the versioned
 JSON schema are in [export-formats.md](export-formats.md); the formatting lives in Core
 (`SessionExporter`, `TranscriptTimestamp`) with golden-file tests.
 

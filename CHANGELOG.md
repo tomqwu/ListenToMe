@@ -13,6 +13,12 @@ does not show it again, and a fresh install does not see it at all; see
 
 ## iOS (unreleased, on `main`)
 
+- **Share** now asks what to send: **Quick summary**, **Full summary**, **Whole conversation** or
+  **Audio**, each offered only when the conversation has it. A summary is shared with just its title
+  and date, without the transcript. The same menu appears in **More**, in a History row's touch-and-hold
+  menu, and after swiping a History row right. Share, Export as and Share audio now open the share sheet
+  reliably from menus; **Share Markdown** is folded into **Export as → Markdown**.
+
 - Keep recording when you switch to another app mid-meeting, such as approving a sign-in in an
   authenticator or accepting a request in another app. Recording now shares audio with other apps,
   so their sounds no longer interrupt it; Stop or a real interruption such as a phone call still ends

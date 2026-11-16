@@ -106,16 +106,20 @@ struct ConversationExportFile: Transferable {
     }
 }
 
-/// The Export as menu's items: one share link per format. Subtitles are offered only when the
-/// conversation's lines carry times (every iPhone and Apple Watch recording does).
+/// The Export as menu's items: one button per format. Subtitles are offered only when the
+/// conversation's lines carry times (every iPhone and Apple Watch recording does). The file is written
+/// when a format is chosen and handed to `share`, so the share sheet opens after the menu closes; a
+/// `ShareLink` inside a menu or context menu can close without ever presenting it.
 struct ConversationExportLinks: View {
     let record: SessionRecord
+    let share: (ConversationSharePayload) -> Void
+    var failed: (String) -> Void = { _ in }
 
     var body: some View {
         ForEach(SessionExporter.formats(for: record)) { format in
-            let file = ConversationExportFile(record: record, format: format)
-            ShareLink(item: file, preview: SharePreview(file.fileName)) {
-                Label(format.title, systemImage: Self.symbol(format))
+            Button(format.title, systemImage: Self.symbol(format)) {
+                do { share(ConversationSharePayload(items: [try ConversationExportFile(record: record, format: format).write()])) }
+                catch { failed("Could not export: \(error.localizedDescription)") }
             }
             .accessibilityIdentifier("export-\(format.rawValue)")
         }
@@ -129,4 +133,65 @@ struct ConversationExportLinks: View {
         case .json: return "curlybraces"
         }
     }
+}
+
+// MARK: Share (quick summary, full summary, whole conversation, audio)
+
+/// What the share sheet is about to send: readable text or saved audio/export files.
+struct ConversationSharePayload: Identifiable {
+    let id = UUID()
+    let items: [Any]
+}
+
+extension MobileSession {
+    /// The Share choices `record` has something for; Audio only when its audio is still saved.
+    func shareContents(for record: SessionRecord) -> [ConversationShareContent] {
+        ConversationShare.contents(for: record, hasAudio: !savedAudio.fileURLs(for: record.id).isEmpty)
+    }
+
+    /// The share sheet's items for one choice, or nil when that choice has nothing to send.
+    func sharePayload(_ content: ConversationShareContent, for record: SessionRecord) -> ConversationSharePayload? {
+        if content == .audio {
+            let files = savedAudio.fileURLs(for: record.id)
+            return files.isEmpty ? nil : ConversationSharePayload(items: files)
+        }
+        guard let text = ConversationShare.text(content, for: record) else { return nil }
+        return ConversationSharePayload(items: [Self.readableText(text)])
+    }
+}
+
+/// The Share menu: Quick summary, Full summary, Whole conversation and Audio, each shown only when the
+/// conversation has it. Choosing one sets a payload the caller presents with `ConversationShareSheet`.
+struct ConversationShareMenu: View {
+    let contents: [ConversationShareContent]
+    let choose: (ConversationShareContent) -> Void
+
+    var body: some View {
+        Menu("Share", systemImage: "square.and.arrow.up") {
+            ForEach(contents) { content in
+                Button(content.title, systemImage: Self.symbol(content)) { choose(content) }
+                    .accessibilityIdentifier("share-\(content.rawValue)")
+            }
+        }
+        .disabled(contents.isEmpty)
+        .accessibilityIdentifier("shareMenu")
+    }
+
+    static func symbol(_ content: ConversationShareContent) -> String {
+        switch content {
+        case .quickSummary: return MobileStyle.symbol(for: .quick)
+        case .fullSummary: return MobileStyle.symbol(for: .summary)
+        case .conversation: return "text.bubble"
+        case .audio: return "waveform"
+        }
+    }
+}
+
+/// The system share sheet for one payload.
+struct ConversationShareSheet: UIViewControllerRepresentable {
+    let payload: ConversationSharePayload
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: payload.items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }

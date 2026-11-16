@@ -19,6 +19,7 @@ struct MobileMeetingView: View {
     @State private var showLanguages = false
     @State private var showCalendar = false
     @State private var showFullSummary = false
+    @State private var sharing: ConversationSharePayload?
     @State private var showRecordingSupport = false
     @State private var showRetranscription = false
     @State private var summaryMode = MobileSummaryMode.summary
@@ -76,17 +77,15 @@ struct MobileMeetingView: View {
                                 Button("Full summary", systemImage: MobileStyle.symbol(for: .summary)) { showFullSummary = true }
                             }
                             Section("Share and export") {
-                                ShareLink(item: session.readableShareText) { Label("Share", systemImage: "square.and.arrow.up") }
-                                    .disabled(!session.hasContent)
-                                ShareLink(item: session.markdown) { Label("Share Markdown", systemImage: "doc.text") }
-                                    .disabled(!session.hasContent)
+                                let record = session.currentRecord
+                                ConversationShareMenu(contents: session.shareContents(for: record)) { content in
+                                    sharing = session.sharePayload(content, for: session.currentRecord)
+                                }
                                 Menu("Export as", systemImage: "doc.badge.arrow.up") {
-                                    ConversationExportLinks(record: session.currentRecord)
+                                    ConversationExportLinks(record: record, share: { sharing = $0 },
+                                                            failed: { session.message = $0 })
                                 }
                                 .disabled(!session.hasContent).accessibilityIdentifier("exportAs")
-                                if session.canPlaySavedAudio {
-                                    ShareLink(items: session.savedAudioFiles) { Label("Share audio", systemImage: "waveform") }
-                                }
                             }
                             Section("App") {
                                 Button("Settings", systemImage: "gearshape") { showSettings = true }
@@ -153,6 +152,7 @@ struct MobileMeetingView: View {
                 }
             }
             .sheet(isPresented: $showNotes) { MobileNotesView(session: session) }
+            .sheet(item: $sharing) { ConversationShareSheet(payload: $0).presentationDetents([.medium, .large]) }
             .sheet(isPresented: $showFullSummary) {
                 NavigationStack { summary.navigationTitle("Full summary").toolbar { Button("Done") { showFullSummary = false } } }
             }

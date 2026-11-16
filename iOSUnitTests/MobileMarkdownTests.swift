@@ -1,6 +1,7 @@
 import XCTest
 import SwiftUI
 @testable import ListenToMeIOS
+import ListenToMeCore
 
 @MainActor
 final class MobileMarkdownTests: XCTestCase {
@@ -36,6 +37,31 @@ final class MobileMarkdownTests: XCTestCase {
         XCTAssertTrue(text.contains("let tag = \"#literal\""))
         XCTAssertEqual(text, MobileSession.readableShareText(for: try XCTUnwrap(session.history.first)))
         XCTAssertTrue(session.markdown.contains("**Alex**"), "Markdown export remains available")
+    }
+
+    func testShareChoicesSendOnlyTheChosenPartReadably() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let session = MobileSession(storageDirectory: root)
+        session.title = "Planning"
+        session.notes = "Private aside"
+        session.quickSummary = "- **Alex** confirms Friday."
+        session.summary = "### Decisions\n- Ship the *beta*."
+        let record = session.currentRecord
+        XCTAssertEqual(session.shareContents(for: record), [.quickSummary, .fullSummary, .conversation],
+                       "Audio is offered only when this conversation's audio is saved")
+        func text(_ content: ConversationShareContent) throws -> String {
+            try XCTUnwrap(session.sharePayload(content, for: record)?.items.first as? String)
+        }
+        let quick = try text(.quickSummary)
+        XCTAssertTrue(quick.contains("Planning") && quick.contains("Alex confirms Friday."), quick)
+        XCTAssertFalse(quick.contains("**") || quick.contains("Ship the") || quick.contains("Private aside"), quick)
+        let full = try text(.fullSummary)
+        XCTAssertTrue(full.contains("Ship the beta."), full)
+        XCTAssertFalse(full.contains("###") || full.contains("confirms Friday") || full.contains("Private aside"), full)
+        let whole = try text(.conversation)
+        XCTAssertTrue(whole.contains("Private aside") && whole.contains("Ship the beta.") && whole.contains("Alex confirms"))
+        XCTAssertNil(session.sharePayload(.audio, for: record))
     }
 
     func testRenderingDoesNotChangeSavedOrExportedMarkdown() throws {
