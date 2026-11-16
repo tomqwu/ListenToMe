@@ -1,0 +1,6 @@
+Long Apple Watch recordings arrive
+
+• Hours-long Apple Watch recordings now finish importing on iPhone. ListenToMe transcribes about ten minutes at a time and saves that text before going on.
+• If you leave ListenToMe or the screen locks during an import, the import picks up where it stopped, with no repeated lines, and each voice keeps its speaker number.
+
+Privacy: Apple Watch audio is still transcribed only on this iPhone, and is deleted once its text is saved unless you turn on Save audio recordings. Nothing is sent off your devices.

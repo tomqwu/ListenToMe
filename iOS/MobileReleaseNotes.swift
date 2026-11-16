@@ -48,6 +48,14 @@ enum MobileReleaseNotes {
         var id: String { version }
     }
     static let releases: [Release] = [
+        .init(version: "1.20.6", title: "Long Apple Watch recordings arrive", details: [
+            "Hours-long Apple Watch recordings now finish importing on iPhone. ListenToMe transcribes about " +
+                "ten minutes at a time and saves that text before going on.",
+            "If you leave ListenToMe or the screen locks during an import, the import picks up where it " +
+                "stopped, with no repeated lines, and each voice keeps its speaker number.",
+            "Apple Watch audio is still transcribed only on this iPhone, and is deleted once its text is saved " +
+                "unless you save audio recordings."
+        ]),
         .init(version: "1.20.5", title: "Share summaries and keep recording", details: [
             "Share sends a summary, never the transcript. Swipe a conversation in History and tap Share to " +
                 "send its summary at once, or choose Full summary, Quick summary or Audio from More → Share.",

@@ -1,0 +1,9 @@
+Updates since 1.20.4:
+
+• Hours-long Apple Watch recordings now finish importing on iPhone. ListenToMe transcribes about ten minutes at a time and saves that text before going on. An interrupted import picks up where it stopped, and each voice keeps its speaker number.
+• Share sends a summary, never the transcript. Swipe a conversation in History and tap Share to send its summary at once, or choose Full summary, Quick summary or Audio from More → Share.
+• A shared summary includes only the conversation's title, date and that summary, as readable text.
+• Keep recording when you switch to another app, for example to approve a sign-in or accept a request. If a call or another interruption ends while you are away, recording resumes when you return.
+• Share, Export as and audio sharing open the share sheet reliably. Share Markdown is now Export as → Markdown.
+
+Your transcript and notes are never shared; Export as is the explicit way to export them. Apple Watch audio is transcribed only on your iPhone.
