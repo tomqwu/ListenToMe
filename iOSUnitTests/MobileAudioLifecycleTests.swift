@@ -85,7 +85,7 @@ final class MobileAudioLifecycleTests: XCTestCase {
         await session.handleInterruption(.ended, options: .shouldResume)
         XCTAssertEqual(session.state, .idle)
         XCTAssertEqual(recorder.startCount, 1, "An inactive completion cannot acquire another microphone")
-        XCTAssertTrue(try XCTUnwrap(session.message).contains("tap Listen"))
+        XCTAssertTrue(try XCTUnwrap(session.message).contains("when you return"))
         XCTAssertFalse(try XCTUnwrap(session.message).contains("resumed"), "Never claim a rejected Start resumed capture")
         active = true
         await session.handleScenePhase(.active)
@@ -94,6 +94,79 @@ final class MobileAudioLifecycleTests: XCTestCase {
         XCTAssertEqual(session.state, .recording)
         XCTAssertEqual(recorder.startCount, 2, "The existing active shouldResume behavior remains available")
         await session.stop()
+    }
+
+    /// Approving a sign-in in an authenticator, or any other app that plays a sound, activates that
+    /// app's audio. A non-mixable recording session is interrupted by it, so recording must mix.
+    func testRecordingAudioSessionMixesSoOtherAppsAudioDoesNotInterruptIt() throws {
+        let audio = AVAudioSession.sharedInstance()
+        try MobileRecorder.configure(audio)
+        XCTAssertEqual(audio.category, .playAndRecord, "Only play-and-record capture can mix with other apps")
+        XCTAssertEqual(audio.mode, .measurement)
+        XCTAssertTrue(audio.categoryOptions.contains(.mixWithOthers),
+                      "Another app's sound must not interrupt a recording that is running in the background")
+        XCTAssertTrue(audio.categoryOptions.contains(.allowBluetoothHFP), "Headset microphones stay available")
+    }
+
+    /// An interruption that ends while the user is still in the other app cannot reopen the microphone
+    /// there, but the recording the user never stopped resumes as soon as they come back.
+    func testInterruptionThatEndsWhileInAnotherAppResumesRecordingOnReturn() async throws {
+        let recorder = LifecycleTestRecorder()
+        let (session, root) = makeSession(recorder)
+        defer { try? FileManager.default.removeItem(at: root) }
+        var active = true
+        session.applicationIsActive = { active }
+        try await record(session)
+
+        active = false
+        await session.handleScenePhase(.inactive)
+        await session.handleScenePhase(.background)
+        XCTAssertEqual(session.state, .recording, "Switching apps alone never stops recording")
+        await session.handleInterruption(.began)
+        await session.handleInterruption(.ended, options: .shouldResume)
+        XCTAssertEqual(session.state, .idle)
+        XCTAssertEqual(recorder.startCount, 1, "No microphone is opened from the background")
+        let waiting = try XCTUnwrap(session.message)
+        XCTAssertTrue(waiting.contains("when you return"), waiting)
+
+        active = true
+        await session.handleScenePhase(.inactive)
+        await session.handleScenePhase(.active)
+        for _ in 0..<400 where session.state != .recording { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertEqual(session.state, .recording)
+        XCTAssertEqual(recorder.startCount, 2)
+        XCTAssertNil(session.stopReason)
+        XCTAssertTrue(try XCTUnwrap(session.message).contains("resumed"))
+        await session.stop()
+    }
+
+    /// A call still in progress, or one the system says not to resume after, is a real stop.
+    func testReturningDuringOrAfterANonResumableInterruptionStaysStopped() async throws {
+        let recorder = LifecycleTestRecorder()
+        let (session, root) = makeSession(recorder)
+        defer { try? FileManager.default.removeItem(at: root) }
+        var active = true
+        session.applicationIsActive = { active }
+        try await record(session)
+
+        active = false
+        await session.handleScenePhase(.background)
+        await session.handleInterruption(.began)
+        active = true
+        await session.handleScenePhase(.active)
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertEqual(session.state, .idle, "The interruption has not ended yet")
+
+        active = false
+        await session.handleScenePhase(.background)
+        await session.handleInterruption(.ended, options: [])
+        let stopped = try XCTUnwrap(session.message)
+        XCTAssertTrue(stopped.contains("tap Listen"), stopped)
+        active = true
+        await session.handleScenePhase(.active)
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertEqual(session.state, .idle)
+        XCTAssertEqual(recorder.startCount, 1)
     }
 
     func testConnectingAMicrophoneMidRecordingRebuildsCaptureInsteadOfStalling() async throws {

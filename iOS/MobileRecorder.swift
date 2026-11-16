@@ -125,7 +125,7 @@ final class MobileRecorder: MobileRecording {
         try Task.checkCancellation()
         let (transcriber, format) = try await MobileSpeechModel.prepare(locale: locale, volatileResults: true)
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.record, mode: .measurement, options: [.allowBluetoothHFP])
+        try Self.configure(session)
         try session.setActive(true)
         let analyzer = SpeechAnalyzer(modules: [transcriber.module])
         // Installed before the context is set, so a vocabulary change during these awaits reaches it.
@@ -382,6 +382,14 @@ final class MobileRecorder: MobileRecording {
 }
 
 extension MobileRecorder {
+    /// The audio session a recording runs in. It mixes with other apps: in the non-mixable `.record`
+    /// category, any app the user switched to that played a sound (an authenticator approving a
+    /// sign-in, an app accepting a request) interrupted and ended a recording running in the
+    /// background. Calls, Siri and apps that take the microphone still interrupt it (CONTINUITY-011).
+    static func configure(_ session: AVAudioSession) throws {
+        try session.setCategory(.playAndRecord, mode: .measurement, options: [.mixWithOthers, .allowBluetoothHFP])
+    }
+
     /// Feeds 16 kHz audio from sample `start` to `samples` into a new analyzer, a few seconds per buffer.
     /// A replay that starts part-way stamps its first buffer, so the new transcriber's results keep the
     /// recording's timeline. Returns false, feeding nothing, when that audio is gone or cannot be converted.

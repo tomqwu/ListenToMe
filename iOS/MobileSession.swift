@@ -24,6 +24,9 @@ final class MobileSession {
     /// Screen lock keeps established microphone capture alive, but model/provider work waits for active use.
     private(set) var auxiliaryWorkSuspended = false
     @ObservationIgnored private var sceneGeneration = 0
+    /// An interruption ended with `shouldResume` while another app was in front. The microphone is not
+    /// reopened from the background; the recording resumes on the next active foreground.
+    @ObservationIgnored var resumesInterruptedRecordingOnReturn = false
     /// When the current recording run started, for the Apple Watch remote's elapsed time (issue #181).
     private(set) var recordingStartedAt: Date?
     /// Receives the recorder status for the Apple Watch; `nil` until the app attaches its link.
@@ -786,15 +789,22 @@ extension MobileSession {
                             options: AVAudioSession.InterruptionOptions = []) async {
         switch type {
         case .began:
+            resumesInterruptedRecordingOnReturn = false
             guard state == .recording || state == .preparing else { return }
             await stopCapture(reason: .interruption,
                               message: "Recording stopped: audio was interrupted by a call or another app. " +
                                        "Your transcript is saved; recording resumes when the interruption ends.")
         case .ended:
             guard stopReason == .interruption, state == .idle, !isSummarizing else { return }
-            guard options.contains(.shouldResume), isForeground, !auxiliaryWorkSuspended, applicationIsActive() else {
+            guard options.contains(.shouldResume) else {
                 message = "Recording stopped: audio was interrupted by a call or another app. " +
                           "Your transcript is saved; tap Listen to continue."
+                return
+            }
+            guard isForeground, !auxiliaryWorkSuspended, applicationIsActive() else {
+                resumesInterruptedRecordingOnReturn = true
+                message = "Recording paused: audio was interrupted by a call or another app. " +
+                          "Your transcript is saved; recording resumes when you return to ListenToMe."
                 return
             }
             start()
@@ -846,6 +856,7 @@ extension MobileSession {
             await refreshRecordingSupport(publish: false)
             guard !Task.isCancelled, generation == sceneGeneration, isForeground, applicationIsActive() else { return }
             auxiliaryWorkSuspended = false
+            resumeInterruptedRecordingOnReturn()
             speakers.setSuspended(false)
             acceptsSpeechCorrection = state == .recording
             liveTranslation.setSuspended(false); summaryTranslation.worker.setSuspended(false)
@@ -872,6 +883,14 @@ extension MobileSession {
             publishWatchStatus()
         default: return
         }
+    }
+
+    private func resumeInterruptedRecordingOnReturn() {
+        guard resumesInterruptedRecordingOnReturn else { return }
+        resumesInterruptedRecordingOnReturn = false
+        guard stopReason == .interruption, state == .idle, !isSummarizing else { return }
+        start()
+        if state != .idle { message = "Recording resumed after the interruption." }
     }
 
     /// Stop and explain why, without overwriting a more specific failure raised while finalizing.

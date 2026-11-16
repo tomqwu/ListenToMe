@@ -11,6 +11,14 @@ does not show it again, and a fresh install does not see it at all; see
 [`docs/IOS.md`](docs/IOS.md) for the fuller per-build technical notes and
 [`metadata/ios/en-US/`](metadata/ios/en-US/) for current TestFlight "What to Test" text.
 
+## iOS (unreleased, on `main`)
+
+- Keep recording when you switch to another app mid-meeting, such as approving a sign-in in an
+  authenticator or accepting a request in another app. Recording now shares audio with other apps,
+  so their sounds no longer interrupt it; Stop or a real interruption such as a phone call still ends
+  it. If an interruption ends while you are in another app, the recording resumes in the same
+  conversation when you return. (`CONTINUITY-011`)
+
 ## Repository tooling (unreleased)
 
 - Recognize the iPad mini's existing compact-height Duo layout before the landscape History

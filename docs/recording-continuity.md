@@ -6,12 +6,30 @@ ends it. An interruption, unavailable route or capture/transcription failure can
 recording with the existing recovery message. This does not allow a cold/background launch, Watch
 Start or delayed cancelled preparation to open a new microphone session.
 
-The app declares the audio background mode and keeps its existing recording audio session. No
+The app declares the audio background mode. No
 silent playback, periodic background-task trick or broad permission reset is used. Device/language
 compatibility checks and the selected on-device speech module remain unchanged. Apple documents
 the [recording background mode](https://developer.apple.com/documentation/avfaudio/avaudiosession/category-swift.struct/record)
 as the mechanism for recording through screen lock; that does not prove this application's native
 speech behavior on every supported device or OS.
+
+## Switching to another app (`CONTINUITY-011`)
+
+1.20.4 kept capture alive through backgrounding itself, but recorded in the non-mixable `.record`
+audio-session category. When the user switched to another app that activated its own audio (an
+authenticator's approval sound, an app accepting a request, any app using the default solo-ambient
+category), iOS interrupted ListenToMe's session. The interruption handler stopped capture, and its
+end could resume only while ListenToMe was active, so the meeting stayed stopped with tap-Listen
+guidance after the user came back.
+
+Recording now uses `.playAndRecord` with `.mixWithOthers` (mode `.measurement`, Bluetooth headset
+input still allowed), so other apps' playback no longer interrupts capture. Phone calls, Siri and
+other apps that take the microphone still interrupt it and stop with a reason. When such an
+interruption ends with the system's `shouldResume` while ListenToMe is not active, no microphone is
+opened from the background; the notice says recording resumes on return and the next active
+foreground restarts it in the same conversation. An interruption still in progress, or one the
+system says not to resume, stays stopped with tap-Listen guidance. Physical-device acceptance is
+pending: simulators cannot reproduce another app's audio session interrupting live capture.
 
 ## Optional work and data handling
 
@@ -23,7 +41,8 @@ and stale completions are fenced; a model already executing may finish, but cann
 result or start the next pass. A current foreground can resume optional work without opening a
 second recording. Existing provider selection and text-sharing disclosures remain in force.
 Vocabulary suggestions remain independent of speech-correction opt-in. An interruption-end while
-inactive keeps recording stopped and offers tap-Listen recovery rather than falsely reporting a resume.
+inactive keeps recording stopped rather than falsely reporting a resume; when the system says capture
+may resume, the notice says it resumes on return and the next active foreground restarts it.
 
 Speaker identities retain their run. Its native sink bounds the rolling speaker audio to the
 existing ten-minute window plus one storage block while passes are paused. A long background
@@ -35,7 +54,7 @@ Existing backup exclusions and complete-until-first-authentication protection re
 
 ## Executable evidence
 
-`CONTINUITY-001`–`CONTINUITY-010` in
+`CONTINUITY-001`–`CONTINUITY-011` in
 [the behavior catalog](../Behaviors/recording-continuity.json) bind native session, provider,
 speaker, actual PCM sink and installed-plist assertions plus a rendered simulator journey.
 Evidence is preserved outside the checkout under

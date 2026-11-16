@@ -47,6 +47,7 @@ extension MobileSession {
     }
 
     func stop() async {
+        resumesInterruptedRecordingOnReturn = false   // an explicit Stop (e.g. from the Watch) is terminal
         if state == .recording {
             languageDetection.suspendChecks(preserveUndoForStop: true)
             if stopReason == nil { stopReason = .user }

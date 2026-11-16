@@ -942,7 +942,10 @@ and offers separate Quick Summary, Summary, and Deep Think model pages with a ca
 - In the 1.20.1 (41) beta, established recording continues through screen lock/background while
   optional AI pauses; a pending Start is cancelled. Audio interruptions (call, Siri, alarm) still
   stop and save with a reason. When active and permitted by the system, recording can resume after
-  an interruption; otherwise the status says to tap Listen. Connecting or losing a microphone mid-recording
+  an interruption; otherwise the status says to tap Listen. Unreleased on `main` (`CONTINUITY-011`):
+  recording mixes with other apps' audio, so switching to an authenticator or another app that plays
+  a sound no longer interrupts it, and an interruption that ends while another app is in front resumes
+  recording when you return. Connecting or losing a microphone mid-recording
   (AirPods, a Bluetooth headset, a wired mic) rebuilds capture on whatever input remains instead of
   ending the meeting; one physical device change posts several notifications, so rebuilds within
   half a second collapse into one and a rebuild is skipped when the input format has not actually
