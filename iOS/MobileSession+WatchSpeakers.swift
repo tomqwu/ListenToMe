@@ -19,8 +19,11 @@ extension MobileSession {
         }
         try Task.checkCancellation()
         guard speakers.enabled, speakers.modelsReady, !speakers.isUnavailable else { return labels }
+        // Kept in memory across a cancelled pass too (leaving the foreground), so a long recording that
+        // resumes keeps one number per voice (WATCH-017). Never saved; dropped at completion, deletion,
+        // when identification is off, and at relaunch.
         defer {
-            if !Task.isCancelled, speakers.enabled, watchInbox.ledger(recordingID) != nil {
+            if speakers.enabled, watchInbox.ledger(recordingID) != nil {
                 watchSpeakerContexts[recordingID] = labels
             } else {
                 watchSpeakerContexts[recordingID] = nil
@@ -53,6 +56,9 @@ struct WatchSpeakerLabels {
         tracker = SpeakerIdentityTracker(namespace: "watch:" + UUID().uuidString,
                                          firstNumber: SpeakerLabeling.nextSpeakerNumber(after: existing))
     }
+
+    /// No window has been labelled yet.
+    var isEmpty: Bool { timeline.isEmpty && identities.isEmpty }
 
     mutating func refreshNames(_ existing: [TranscriptSegment]) {
         for line in existing {

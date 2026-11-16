@@ -98,6 +98,9 @@ final class MobileWatchLongRecordingTests: XCTestCase {
         XCTAssertEqual(finished.segments?.map(\.text), (0..<parts).map { "Part \($0)" })
         XCTAssertEqual(finished.isComplete, true)
         XCTAssertTrue((0..<parts).allSatisfy { !partExists(session, $0) })
+        XCTAssertEqual(Set(finished.segments?.compactMap(\.speakerName) ?? []), ["Speaker 1"],
+                       "One voice keeps one label across the interruption")
+        XCTAssertTrue(session.watchSpeakerContexts.isEmpty, "A completed import discards its voiceprints")
     }
 }
 

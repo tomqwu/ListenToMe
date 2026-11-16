@@ -159,7 +159,7 @@ extension MobileSession {
             do {
                 try await drainWatchRecording(ledger.recordingID, now: now)
             } catch is CancellationError {
-                watchSpeakerContexts[ledger.recordingID] = nil
+                // Speaker context stays for the resumed import; see `watchSpeakerLabels`.
                 return
             } catch let error where error is WatchConversationUnavailable || Self.isTransient(error) {
                 continue

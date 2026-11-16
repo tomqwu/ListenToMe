@@ -238,8 +238,9 @@ foreground visit, so the import started over each time and never saved any text.
 
 **Fix:** each pass labels and transcribes at most `MobileSession.watchPartsPerPass` (2) parts,
 about 10 minutes of audio. It saves their text and deletes their audio before the next pass.
-Speaker identities carry across passes within one import. An interruption costs at most one pass.
-A relaunch can still number a returning voice anew, because voiceprints are never saved.
+Speaker identities carry across passes, and across a foreground interruption, in memory only. An
+interruption costs at most one pass. A relaunch can still number a returning voice anew, because
+voiceprints are never saved.
 `MobileWatchLongRecordingTests/testInterruptedLongImportKeepsProgressAndResumes` reproduced the
 failure: no text and no audio removed after an interruption. It passes with the fix. Physical
 multi-hour Watch/iPhone acceptance is pending.

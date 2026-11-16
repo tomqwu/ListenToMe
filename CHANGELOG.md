@@ -18,7 +18,7 @@ does not show it again, and a fresh install does not see it at all; see
   ListenToMe or locking the screen started that work over. The recording never reached History
   and stayed under **Waiting from Apple Watch**. The import now handles about ten minutes of audio
   at a time and saves that text before moving on. An interrupted import resumes where it stopped,
-  with no repeated lines. Physical multi-hour Watch acceptance is pending. (`WATCH-017`)
+  with no repeated lines, and each voice keeps its speaker number. Physical multi-hour Watch acceptance is pending. (`WATCH-017`)
 
 ## iOS 1.20.5 (45) — 2026-11-16 (TestFlight; App Store review)
 

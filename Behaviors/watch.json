@@ -414,7 +414,7 @@
       "name": "A long Watch recording keeps its import progress across foreground interruptions",
       "given": "a multi-part Apple Watch recording with speaker identification on is waiting in the iPhone inbox",
       "when": "the iPhone leaves the foreground while the import is labelling speakers partway through the recording, then returns",
-      "then": "each pass labels and transcribes at most two parts; the parts finished before the interruption stay saved as text in order with their audio removed, and the next foreground finishes the remaining parts without repeating a line and completes the conversation",
+      "then": "each pass labels and transcribes at most two parts; the parts finished before the interruption stay saved as text in order with their audio removed, and the next foreground finishes the remaining parts without repeating a line and completes the conversation; one voice keeps one speaker label across the interruption, and the in-memory speaker context is discarded when the import completes",
       "covers": [
         "iOS/MobileSession+WatchInbox.swift",
         "iOS/MobileSession+WatchSpeakers.swift"
@@ -424,6 +424,11 @@
           "suite": "ios-unit",
           "file": "iOSUnitTests/MobileWatchLongRecordingTests.swift",
           "test": "MobileWatchLongRecordingTests/testInterruptedLongImportKeepsProgressAndResumes"
+        },
+        {
+          "suite": "ios-unit",
+          "file": "iOSUnitTests/MobileWatchSpeakerTests.swift",
+          "test": "MobileWatchSpeakerTests/testStartDoesNotWaitForCancellationInsensitiveWatchDiarizer"
         }
       ],
       "manual": {
