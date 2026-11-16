@@ -1,5 +1,23 @@
 # Publish an iOS build to TestFlight
 
+## Current App Store review — 1.20.5 (45)
+
+Submitted at **2026-11-16T19:44Z** (submission `db41e57c-35b6-462c-bdce-d49713c5b13c`), state
+**WAITING_FOR_REVIEW**, release type **AFTER_APPROVAL**: it will go live when Apple approves it. Build 45
+is selected, and en-US/en-CA What's New and the updated review notes were read back. 46 screenshots
+(23 per locale, 5 slots) were processed, their order read back, and the downloads match the uploads
+pixel for pixel. Physical-device acceptance is deferred at the maintainer's direction.
+[Review receipt](releases/ios-1.20.5-build45-review.json).
+
+## Current TestFlight checkpoint — 1.20.5 (45)
+
+Apple accepted the upload at **2026-11-16T19:38Z** from `30fe9ca` (helper, API key, manual signing:
+the API key lacks cloud-signing permission, so the existing local App Store profiles were used).
+Build `54bb4505-5777-41e1-aadb-2947d84ebd0f` is **VALID / IN_BETA_TESTING**. The internal Dev group
+(automatic access) includes it, and its en-US What to Test was read back.
+[Publication receipt](releases/ios-1.20.5-build45.json) ·
+[Release notes and What to Test](https://github.com/tomqwu/ListenToMe/releases/tag/ios-v1.20.5-build45).
+
 ## App Store production — 1.20.4 (44)
 
 Apple approved the 1.20.4 (44) submission (`6048f839-fd00-43f6-be16-21a87b0d1252`, submitted
@@ -10,7 +28,7 @@ then read **READY_FOR_SALE**, and the public US listing reports 1.20.4 (observed
 [Review receipt](releases/ios-1.20.4-build44-review.json) ·
 [Release receipt](releases/ios-1.20.4-build44-release.json).
 
-## Current TestFlight checkpoint — 1.20.4 (44)
+## Earlier TestFlight checkpoint — 1.20.4 (44)
 
 Apple accepted **1.20.4 (44)** through the official TestFlight helper at
 **2026-10-31T14:08:38.174679+00:00** from merged source

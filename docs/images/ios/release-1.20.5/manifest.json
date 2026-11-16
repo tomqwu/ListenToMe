@@ -1,0 +1,144 @@
+{
+ "schemaVersion": 1,
+ "status": "captured_reviewed_listing_uploaded",
+ "candidateSource": "1dcda2592ab58ab21bbbd4ecb3cf2c9545c704ce",
+ "releasedSource": "30fe9ca3c86c3c32db3c041f071390369a0f60f7",
+ "sourceTreesIdentical": true,
+ "version": "1.20.5",
+ "build": "45",
+ "locale": "en-US",
+ "capturedAt": "2026-11-16",
+ "captureKind": "Debug simulator, synthetic fixtures",
+ "profileCount": 7,
+ "assetCount": 77,
+ "allInspected": true,
+ "nativeTests": "all seven profiles passed; the three Watch profiles each needed one retry after their first run started before boot finished",
+ "selected": [
+  {
+   "category": "iphone-max",
+   "path": "docs/images/ios/release-1.20.5/01-iphone-live.png",
+   "originalEvidencePath": "iphone-max/attachments/7E81BF1D-3D2E-4834-85BE-6534324BF4D4.png",
+   "sha256": "d742868d85b9c0a0ade5e0c42f89d291d4f0027f0332427b993074d30f1a587c",
+   "renderedPixels": [
+    1320,
+    2868
+   ],
+   "renderedOrientation": "portrait",
+   "exifOrientation": 1,
+   "device": "iPhone 17 Pro Max",
+   "runtime": "iOS 26.5 (23F77)",
+   "processing": "none; original PNG bytes and EXIF preserved"
+  },
+  {
+   "category": "iphone-pro",
+   "path": "docs/images/ios/release-1.20.5/02-iphone-prompt.png",
+   "originalEvidencePath": "iphone-pro/attachments/3FEDF935-22BF-45B2-B20A-F18FD72B548C.png",
+   "sha256": "4f660e0690f65df741f46051b48ab34b8fb3daa3778e79dcdbbe35d7af257e6c",
+   "renderedPixels": [
+    1206,
+    2622
+   ],
+   "renderedOrientation": "portrait",
+   "exifOrientation": 1,
+   "device": "iPhone 17 Pro",
+   "runtime": "iOS 26.5 (23F77)",
+   "processing": "none; original PNG bytes and EXIF preserved"
+  },
+  {
+   "category": "iphone-pro",
+   "path": "docs/images/ios/release-1.20.5/03-iphone-duo.png",
+   "originalEvidencePath": "iphone-pro/attachments/7A7B8F39-58C0-4077-8A69-F7271FB1956A.png",
+   "sha256": "eb3358825a7742a23f12f24620f04a037f84204ccc5155c6e22b73cf7a3104b9",
+   "renderedPixels": [
+    2622,
+    1206
+   ],
+   "renderedOrientation": "landscape",
+   "exifOrientation": 8,
+   "device": "iPhone 17 Pro",
+   "runtime": "iOS 26.5 (23F77)",
+   "processing": "none; original PNG bytes and EXIF preserved"
+  },
+  {
+   "category": "ipad-pro",
+   "path": "docs/images/ios/release-1.20.5/04-ipad-wide.png",
+   "originalEvidencePath": "ipad-pro/attachments/2DEFDEB2-60D6-493D-8F6A-3AE03C38E99E.png",
+   "sha256": "d34ae5e47d9179de43de8968c9f8d29bfdb3a9269766843100e50a229ef0e38f",
+   "renderedPixels": [
+    2752,
+    2064
+   ],
+   "renderedOrientation": "landscape",
+   "exifOrientation": 8,
+   "device": "iPad Pro 13-inch (M5)",
+   "runtime": "iOS 26.5 (23F77)",
+   "processing": "none; original PNG bytes and EXIF preserved"
+  },
+  {
+   "category": "ipad-mini",
+   "path": "docs/images/ios/release-1.20.5/05-ipad-history.png",
+   "originalEvidencePath": "ipad-mini/attachments/44FD8C54-1DA5-4C8F-9DF4-A942D101583E.png",
+   "sha256": "bf632c6506785e0cc6ff982307414f209b9d1f7feb7dd107adc38e9cba1bfb79",
+   "renderedPixels": [
+    2266,
+    1488
+   ],
+   "renderedOrientation": "landscape",
+   "exifOrientation": 8,
+   "device": "iPad mini (A17 Pro)",
+   "runtime": "iOS 26.5 (23F77)",
+   "processing": "none; original PNG bytes and EXIF preserved"
+  },
+  {
+   "category": "watch42",
+   "path": "docs/images/ios/release-1.20.5/06-watch-ready.png",
+   "originalEvidencePath": "watch42/retry1/attachments/F2D0E1B0-558F-413F-ADCC-21DA6B0F87C8.png",
+   "sha256": "7a22e6b191093be66385eabaa6e65564df65b8134d59c71209c511466c948a39",
+   "renderedPixels": [
+    374,
+    446
+   ],
+   "renderedOrientation": "portrait",
+   "exifOrientation": 1,
+   "device": "Apple Watch Series 12 (42mm)",
+   "runtime": "watchOS 27.0 (24R362)",
+   "processing": "none; original PNG bytes and EXIF preserved"
+  },
+  {
+   "category": "watch49",
+   "path": "docs/images/ios/release-1.20.5/07-watch-recording.png",
+   "originalEvidencePath": "watch49/retry1/attachments/BC51830D-4962-4F77-9957-364EFBDC4953.png",
+   "sha256": "6ce56e501f3be0af557247be8404e91bd1ed20327964a5eb45ced041f0cd4ee4",
+   "renderedPixels": [
+    422,
+    514
+   ],
+   "renderedOrientation": "portrait",
+   "exifOrientation": 1,
+   "device": "Apple Watch Ultra 4 (49mm)",
+   "runtime": "watchOS 27.0 (24R362)",
+   "processing": "none; original PNG bytes and EXIF preserved"
+  },
+  {
+   "category": "watch46",
+   "path": "docs/images/ios/release-1.20.5/08-watch-restored.png",
+   "originalEvidencePath": "watch46/retry1/attachments/3FA9C0BE-D1B0-4EB4-99F7-7B73DCC933F7.png",
+   "sha256": "27237433c5d71fd42bfb71a1215f21861654b5c265012cf71f3cda881d8afc0f",
+   "renderedPixels": [
+    416,
+    496
+   ],
+   "renderedOrientation": "portrait",
+   "exifOrientation": 1,
+   "device": "Apple Watch Series 12 (46mm)",
+   "runtime": "watchOS 27.0 (24R362)",
+   "processing": "none; original PNG bytes and EXIF preserved"
+  }
+ ],
+ "listingUploaded": "46 App Store screenshots (23 per en-US and en-CA) processed and download-verified; see docs/releases/ios-1.20.5-build45-review.json",
+ "physicalAcceptance": "not performed (deferred by the maintainer)",
+ "limitations": [
+  "Simulator fixtures show layout, not microphone, model or translation quality.",
+  "Watch fixtures do not establish physical recording or paired transfer."
+ ]
+}

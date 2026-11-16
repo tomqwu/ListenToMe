@@ -2,10 +2,20 @@
 
 The first iOS version is a standalone app, separate from the macOS release. It requires iOS/iPadOS
 26 or later. The bundle identifier is `com.tomwu.ListenToMe.ios`. Public App Store version is
-**1.19.1 (39)** in the recorded public baseline and the latest TestFlight version is **1.20.4 (44)**. See the
-[public availability observation](releases/ios-1.19.1-build39-public.json).
+**1.20.4 (44)** (released November 16, 2026; [release receipt](releases/ios-1.20.4-build44-release.json)).
+The latest TestFlight version is **1.20.5 (45)**, which is in App Store review and set to release on approval.
 
-## App Store review — 1.20.4 (44)
+## 1.20.5 (45) — TestFlight and App Store review, November 16, 2026
+
+Share now sends only a summary or the saved audio, never the transcript or notes. A History swipe
+shares the summary at once. Recording keeps running when you switch apps, and an interruption that
+ends while you are away resumes recording when you return. Apple accepted the upload at 19:38 UTC
+from `30fe9ca`. The build is **VALID / IN_BETA_TESTING** for the Dev group. Version 1.20.5 was submitted
+for review at 19:44 UTC with release on approval and 46 verified screenshots. Physical-device
+acceptance is deferred at the maintainer's direction. [TestFlight receipt](releases/ios-1.20.5-build45.json) ·
+[Review receipt](releases/ios-1.20.5-build45-review.json).
+
+## App Store review — 1.20.4 (44), now released
 
 Apple accepted the iPhone/iPad and embedded-Watch submission on October 31 at **17:01 UTC**;
 both submission and version read **WAITING_FOR_REVIEW**. The maintainer explicitly deferred

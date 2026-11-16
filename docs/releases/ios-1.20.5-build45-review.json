@@ -1,0 +1,93 @@
+{
+ "submittedAt": "2026-11-16T19:44:57.834243+00:00",
+ "reviewSubmissionId": "db41e57c-35b6-462c-bdce-d49713c5b13c",
+ "reviewState": "WAITING_FOR_REVIEW",
+ "versionId": "5b0cf24b-704f-49da-bec7-69191a1acc3b",
+ "version": "1.20.5",
+ "build": "45",
+ "buildId": "54bb4505-5777-41e1-aadb-2947d84ebd0f",
+ "selectedBuildMatches": true,
+ "versionState": "WAITING_FOR_REVIEW",
+ "releaseType": "AFTER_APPROVAL",
+ "releaseRule": "release on approval (maintainer, 2026-11-16)",
+ "artifactSource": "30fe9ca3c86c3c32db3c041f071390369a0f60f7",
+ "locales": {
+  "en-CA": {
+   "whatsNewMatches": true
+  },
+  "en-US": {
+   "whatsNewMatches": true
+  }
+ },
+ "reviewNotes": "carried over from 1.20.4 and updated for Share (summary/audio only) and app-switch recording; readback matched",
+ "screenshots": {
+  "total": 46,
+  "sets": {
+   "en-CA/APP_IPHONE_67": {
+    "count": 5,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   },
+   "en-CA/APP_IPHONE_61": {
+    "count": 4,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   },
+   "en-CA/APP_IPAD_PRO_3GEN_129": {
+    "count": 6,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   },
+   "en-CA/APP_IPAD_PRO_3GEN_11": {
+    "count": 6,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   },
+   "en-CA/APP_WATCH_ULTRA": {
+    "count": 2,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   },
+   "en-US/APP_IPHONE_67": {
+    "count": 5,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   },
+   "en-US/APP_IPHONE_61": {
+    "count": 4,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   },
+   "en-US/APP_IPAD_PRO_3GEN_129": {
+    "count": 6,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   },
+   "en-US/APP_IPAD_PRO_3GEN_11": {
+    "count": 6,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   },
+   "en-US/APP_WATCH_ULTRA": {
+    "count": 2,
+    "orderReadbackMatches": true,
+    "allComplete": true,
+    "allDownloadsMatch": true
+   }
+  },
+  "captureManifest": "docs/images/ios/release-1.20.5/manifest.json"
+ },
+ "physicalDeviceAcceptanceVerified": false,
+ "maintainerInstruction": "release it to testflight and production; defer physical-device acceptance (2026-11-16)",
+ "approved": false,
+ "publiclyAvailable": false
+}
