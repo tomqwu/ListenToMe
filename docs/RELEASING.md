@@ -112,16 +112,15 @@ never replace installed-app GUI/system-audio acceptance or signed artifact verif
 
 ## Release cadence: trains, not one release per fix
 
-macOS publication is batched into **release trains**, as specified in [AGENTS.md](../AGENTS.md). A
-change is done when it is merged to `main` with the required checks green, tests passing and docs
-updated; publishing is a separate step that happens when a batch of merged work is complete, or when
-a single user-visible fix warrants going out on its own.
+Each change leads to a release (maintainer instruction, 2026-11-16), as specified in
+[AGENTS.md](../AGENTS.md#release-trains-when-to-publish). A change is done when it is merged to `main`
+with the required checks green, tests passing and docs updated. Publishing is the next step: every
+merged change to the Mac app starts a macOS train as soon as it is merged, without batching or a
+per-day cap, **except while the pause below holds**. The heading keeps its older wording so links
+to it keep working.
 
-- **At most one macOS release per day for trains an agent starts on its own initiative.** Never one
-  release per merged pull request. A train the maintainer calls ("publish", "release what's on
-  `main`", "publish as always") goes out the same day even if one already departed.
-- Otherwise, if the day's self-started train has already departed, the change rides the next one. Leave it merged with its
-  `CHANGELOG.md` entry under the unreleased macOS heading and report it as merged, not released.
+- A train the maintainer calls ("publish", "release what's on `main`", "publish as always") goes out
+  the same day even if one already departed.
 - Documentation-only changes never require a binary release.
 - **macOS releases are paused at 1.4.4 (14) on the maintainer's decision.** Mac work merged since
   then stays under `## macOS (unreleased since 1.4.4)` in `CHANGELOG.md` and is reported as merged,
