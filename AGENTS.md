@@ -87,6 +87,10 @@ train is running" is a complete and accurate status report.
 and has no per-day cap. Every major iOS release includes a validated TestFlight build (maintainer
 instruction, 2026-10-24); do not finish a major release with only a tag or GitHub release page.
 
+- **Each change goes end to end without asking** (maintainer instruction, 2026-11-16): branch, pull
+  request, green checks, merge, release train and publication. Never ask the maintainer to confirm
+  any of these steps, for iOS or Mac. Ask only for what only the maintainer can do: an Apple
+  agreement, sign-in, Touch ID, physical-device acceptance, or a product decision.
 - **Every merged change that alters a shipped app starts that platform's release train as soon as it
   is merged and its candidate checks pass**, even if a build already went out that day. Do not ask
   first and do not wait for other work. For iOS (iPhone/iPad and the embedded Watch app) that is a

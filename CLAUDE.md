@@ -17,7 +17,8 @@ done when it is merged to `main` with the three required checks green, relevant 
 every affected doc updated. **Every merged change to a shipped app then starts its own release**
 (maintainer instruction, 2026-11-16): run the iOS TestFlight train as soon as the change is merged and
 its candidate checks pass, without batching, a per-day cap or asking first, even if a build already
-went out that day. See [AGENTS.md](AGENTS.md#release-trains-when-to-publish). Until that train's
+went out that day. Each change goes end to end (branch, PR, merge, release, publish) without asking the
+maintainer to confirm any step. See [AGENTS.md](AGENTS.md#release-trains-when-to-publish). Until that train's
 upload is accepted, do not call merged work released. When a train is due, AGENTS.md's ladder (candidate → verified → published) and its downloaded-asset
 verification apply in full. The checklist below adds documentation and issue hygiene; it does not
 replace that workflow. Documentation-only changes do not require an unrelated model request or
